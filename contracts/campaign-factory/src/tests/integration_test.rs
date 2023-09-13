@@ -2726,6 +2726,49 @@ mod tests {
             );
         }
 
+        //description: pool only has 1 lock-up period. Test case purpose: check the accuracy of reward distribution with multiple stakers
+        //         -------------- proper operation with multiple users 2 ------------------
+        // - ADMIN create campaign contract by factory contract
+        // - contract has only ONE lock-up period: 30s, percentage = 100%
+        // - add 1000.000 reward token to campaign by ADMIN
+        // - with start_time ->  end_time: 10s -> 110s -> reward_per_second = 10.000 token
+        // -----------Phrase 0: calculate reward for staking nft in active campaign ------------
+        // - increase 20s to make active campaign: 20s
+        // 	- USER_1 stake nft token_id 1 -> token_id 1 has time stake: s20 -> s50
+        // - increase simulation time more 10s: 30s
+        // 	- USER_1 stake nft token_id 2 -> token_id 2 has time stake: s30 -> s60 -> calculate pending reward token_id 1
+        // 		- token_id 1 pending_reward = 10(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 1 (nft_count) = 100.000 token
+        // 	- USER_2 stake nft token_id 3 -> token_id 3 has time stake: s30 -> s60
+        // - increase simulation time more 20s: 50s
+        // 	- token_id 1 pending_reward = 100.000 + 20(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 3 (nft_count) = 166.666 token
+        // 	- token_id 2 pending_reward = 20(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 3 (nft_count) = 66.666 token
+        // 	- token_id 3 pending_reward = 20(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 3 (nft_count) = 66.666 token
+        // - increase simulation time more 10s: 60s
+        // 	- token_id 2 pending_reward = 66.666 + 10(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 2 (nft_count) = 116.666 token
+        // 	- token_id 3 pending_reward = 66.666 + 10(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 2 (nft_count) = 116.666 token
+        // 	- USER_1 reward_debt = 166.666(token_id 1) + 116.666(token_id 2) = 283.332
+        // 	- USER_2 reward_debt = 116.667(token_id 3) = 116.666
+        // 	- USER_1 claim reward: 283.332
+        // 		- token_id 1 pending_reward = 0
+        // 		- token_id 2 pending_reward = 0
+        // 		- USER_1 reward_debt = 0, reward_claimed = 283.332, nfts = 1,2
+        // -----------Phrase 1: calc reward for staking nft but time out campaign ------------
+        // - increase simulation time more 30s: 90s
+        // 	- USER_2 stake token_id 4 -> has time stake: s90 -> s120
+        // - increase simulation time more 10s: 100s
+        // 	- USER_3 stake token_id 5 -> has time stake: s100 -> s130
+        // 	- token_id 4 pending_reward = 10(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 1 (nft_count) = 100.000 token
+        // - increase simulation time more 10s: 110s (campaign ended)
+        // 	- token_id 4 pending_reward = 100.000 + 10(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 2 (nft_count) = 150.000 token
+        // 	- token_id 5 pending_reward = 10(s) * 10.000(reward_per_second) * 100 / 100 (percent_lockup_term) / 2 (nft_count) = 50.000 token
+        // - unstake nfts = 1,2,3,4,5
+        // 	- USER_1 reward_debt = 0, reward_claimed = 283.334, nfts = []
+        // 	- USER_2 reward_debt = 116.666(token_id 3) + 150.000(token_id 4) = 266.666 token
+        // 	- USER_3 reward_debt = 50.000(token_id 5) = 50.000 token
+        // 	- total_pending_reward = 266.666 + 50.000 = 316.666
+        // 	- withdraw remaining reward = 1000.000(total) - 283.332(USER_1 claimed) - 316.666(pending) = 400.002
+        // 	- ADMIN token = 400.002
+        // 	- Campaign token = 316.666
         #[test]
         fn proper_operation_with_multiple_users_2() {
             // get integration test app and contracts
