@@ -129,6 +129,11 @@ pub const TOKEN_IDS: Item<Vec<String>> = Item::new("token_ids");
 // list nft staked
 pub const NFTS: Map<String, NftInfo> = Map::new("nfts");
 
+pub struct RewardRate {
+    pub timestamp: u64,
+    pub rate: u64,
+}
+pub const ARRAY_REWARD_RATE: Item<Vec<RewardRate>> = Item::new("array_reward_rate");
 // result query
 #[cw_serde]
 pub struct CampaignInfoResult {
