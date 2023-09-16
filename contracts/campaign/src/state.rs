@@ -129,11 +129,22 @@ pub const TOKEN_IDS: Item<Vec<String>> = Item::new("token_ids");
 // list nft staked
 pub const NFTS: Map<String, NftInfo> = Map::new("nfts");
 
+#[cw_serde]
 pub struct RewardRate {
     pub timestamp: u64,
     pub rate: u64,
 }
-pub const ARRAY_REWARD_RATE: Item<Vec<RewardRate>> = Item::new("array_reward_rate");
+
+impl fmt::Display for RewardRate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.timestamp, self.rate)
+    }
+}
+
+pub const TERM_REWARD_RATES: Map<String, Vec<RewardRate>> = Map::new("term_reward_rates");
+pub const TOTAL_STAKING_BY_TERM: Map<String, u64> = Map::new("total_staking_by_term");
+pub const TERM_EXPIRATION_TIMES: Map<String, Vec<u64>> = Map::new("expiration_times");
+
 // result query
 #[cw_serde]
 pub struct CampaignInfoResult {
