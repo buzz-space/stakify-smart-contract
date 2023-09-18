@@ -41,12 +41,24 @@ const stakes = [
     { start: 55, term: 10 },
     { start: 56, term: 10 },
     { start: 70, term: 10 },
+    { start: 71, term: 10 },
+    { start: 90, term: 10 },
 ];
 
 stakes.forEach((stake) => stakeNFT(stake));
 console.log(arrRewardRate);
 
 function calculateReward(timestamp, stake, arrRewardRate) {
+    arrEndTime = arrEndTime.filter((endTime) => {
+        if (endTime <= timestamp) {
+            updateRewardRate(endTime, -1);
+            return false;
+        }
+        return true;
+    });
+
+    updateRewardRate(timestamp, 0);
+
     let reward = 0;
 
     // Sắp xếp arrRewardRate theo thời gian tăng dần
@@ -58,8 +70,6 @@ function calculateReward(timestamp, stake, arrRewardRate) {
 
     // Nếu mốc thời gian yêu cầu trước khi NFT được đặt cọc, trả về 0
     if (timestamp < stakeStart) return 0;
-
-    let lastRateTimestamp = stakeStart;
 
     // Duyệt qua mỗi mốc thời gian có sự thay đổi về tỷ lệ phần thưởng
     for (let i = 0; i < arrRewardRate.length; i++) {
@@ -75,9 +85,9 @@ function calculateReward(timestamp, stake, arrRewardRate) {
     return reward;
 }
 
-console.log(calculateReward(50, { start: 42, end: 52 }, arrRewardRate));
-
-let a = [
+console.log(calculateReward(500, { start: 71, end: 81 }, arrRewardRate));
+console.log(arrRewardRate);
+let rates = [
     { timestamp: 10, rate: 10 },
     { timestamp: 15, rate: 5 },
     { timestamp: 20, rate: 5 },

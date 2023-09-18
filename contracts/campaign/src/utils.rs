@@ -39,8 +39,6 @@ pub fn update_reward_rate(
     change: i64,
 ) -> (Vec<RewardRate>, u64) {
     // Ensure the total doesn't go below zero
-    // let total_nft = (total as i64).saturating_add(change) as u64;
-    println!("New Total: {}", total);
     let result = (total as i64).saturating_add(change);
     let total_nft = if result <= 0 { 0 } else { result } as u64;
 
@@ -69,21 +67,6 @@ pub fn stake_nft(
     let mut new_expiration_times = Vec::with_capacity(expiration_times.len());
     let mut total_nft = total;
 
-    // timestamp = 40
-    // total = 2
-    // expiration_times = [30, 35]
-    // arr_reward_rate = [10:1, 15:2, 20:2, 25:2]
-
-    /*
-    30 < 40
-    update_reward_rate(arr_reward_rate = [10:1, 15:2, 20:2, 25:2], 2, 30, -1)
-    updated_reward_rate = [10:1, 15:2, 20:2, 25:2, 30:1]
-    t = 1;
-
-
-     */
-
-    println!("expiration_times: {:?}", expiration_times);
     for &end_time in &expiration_times {
         if end_time <= timestamp {
             let (updated_reward_rate, t) =
@@ -106,23 +89,40 @@ pub fn stake_nft(
 pub fn calculate_reward(
     mut nft: NftInfo,
     mut term_reward_rates: Vec<RewardRate>,
+    expiration_times: Vec<u64>,
+    total: u64,
     current_time: u64,
+    end_time_campaign: u64,
     reward_per_second: Uint128,
 ) -> NftInfo {
+    let mut total_nft = total;
+
+    for &end_time in &expiration_times {
+        if end_time <= current_time {
+            let (updated_reward_rate, t) =
+                update_reward_rate(term_reward_rates, total_nft, end_time, -1);
+            term_reward_rates = updated_reward_rate;
+            total_nft = t;
+        }
+    }
+
+    let (final_reward_rate, _) = update_reward_rate(term_reward_rates, total_nft, current_time, 0);
+    term_reward_rates = final_reward_rate;
+
     let mut reward: u128 = 0;
 
-    // Sắp xếp arrRewardRate theo thời gian tăng dần
+    // Sort arrRewardRate by time in ascending order
     term_reward_rates.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
 
-    // Nếu mốc thời gian yêu cầu trước khi NFT được đặt cọc, trả về 0
-    if current_time < nft.start_time {
+    // If the required timeline is before the NFT is staked, return 0
+    if current_time < nft.time_calc {
         return nft;
     }
 
-    let nft_start = nft.start_time;
+    let nft_start = nft.time_calc;
     let nft_end = current_time.min(nft.end_time);
 
-    // Duyệt qua mỗi mốc thời gian có sự thay đổi về tỷ lệ phần thưởng
+    // Browse each timeline with reward rate changes
     for i in 0..term_reward_rates.len() {
         let rate_obj = &term_reward_rates[i];
 
@@ -136,15 +136,23 @@ pub fn calculate_reward(
             if rate_obj.rate != 0 {
                 let additional_reward = duration
                     .saturating_mul(reward_per_second.u128())
-                    .saturating_div(rate_obj.rate as u128);
+                    .saturating_mul(nft.lockup_term.percent.u128())
+                    .saturating_div(rate_obj.rate as u128)
+                    .saturating_div(100u128);
                 reward = reward.saturating_add(additional_reward);
             }
         }
     }
-    nft.pending_reward = Uint128::from(reward);
 
-    // Kiểm tra nếu NFT đã kết thúc và cập nhật trạng thái cho nó
-    if current_time >= nft.end_time {
+    // update pending reward
+    nft.pending_reward = add_reward(nft.pending_reward, Uint128::from(reward)).unwrap();
+
+    // update time calc
+    nft.time_calc = nft_end;
+
+    //TODO:
+    // if nft is end reward then update status nft
+    if nft.time_calc == nft.end_time || current_time >= end_time_campaign {
         nft.is_end_reward = true;
     }
 
