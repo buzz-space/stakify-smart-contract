@@ -54,6 +54,9 @@ pub fn update_reward_rate(
         });
     }
 
+    // Sort arrRewardRate by time in ascending order
+    arr_reward_rate.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+
     (arr_reward_rate, total_nft)
 }
 
@@ -64,7 +67,7 @@ pub fn stake_nft(
     nft: NftStake,
     timestamp: u64,
 ) -> (Vec<u64>, Vec<RewardRate>, u64) {
-    let mut new_expiration_times = Vec::with_capacity(expiration_times.len());
+    let mut new_expiration_times: Vec<u64> = vec![];
     let mut total_nft = total;
 
     for &end_time in &expiration_times {
@@ -94,7 +97,11 @@ pub fn calculate_reward(
     current_time: u64,
     end_time_campaign: u64,
     reward_per_second: Uint128,
-) -> NftInfo {
+) -> (NftInfo, Vec<RewardRate>, u64, Vec<u64>) {
+    if nft.is_end_reward {
+        return (nft, term_reward_rates, total, expiration_times);
+    }
+    let mut new_expiration_times: Vec<u64> = vec![];
     let mut total_nft = total;
 
     for &end_time in &expiration_times {
@@ -103,6 +110,8 @@ pub fn calculate_reward(
                 update_reward_rate(term_reward_rates, total_nft, end_time, -1);
             term_reward_rates = updated_reward_rate;
             total_nft = t;
+        } else {
+            new_expiration_times.push(end_time);
         }
     }
 
@@ -116,7 +125,7 @@ pub fn calculate_reward(
 
     // If the required timeline is before the NFT is staked, return 0
     if current_time < nft.time_calc {
-        return nft;
+        return (nft, term_reward_rates, total_nft, new_expiration_times);
     }
 
     let nft_start = nft.time_calc;
@@ -150,11 +159,10 @@ pub fn calculate_reward(
     // update time calc
     nft.time_calc = nft_end;
 
-    //TODO:
     // if nft is end reward then update status nft
     if nft.time_calc == nft.end_time || current_time >= end_time_campaign {
         nft.is_end_reward = true;
     }
 
-    nft
+    (nft, term_reward_rates, total_nft, new_expiration_times)
 }

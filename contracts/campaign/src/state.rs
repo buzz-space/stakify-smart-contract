@@ -5,6 +5,11 @@ use cosmwasm_std::{Addr, Uint128}; // address type
 use cw_storage_plus::{Item, Map}; // analog of Singletons for storage
 
 #[cw_serde]
+pub struct Config {
+    pub owner: Addr,
+}
+
+#[cw_serde]
 pub enum TokenInfo {
     Token { contract_addr: String },
     NativeToken { denom: String },
@@ -97,6 +102,8 @@ impl fmt::Display for RewardRate {
         write!(f, "{}: {}", self.timestamp, self.rate)
     }
 }
+
+pub const CONFIG: Item<Config> = Item::new("config");
 
 // campaign info
 pub const CAMPAIGN_INFO: Item<CampaignInfo> = Item::new("campaign_info");

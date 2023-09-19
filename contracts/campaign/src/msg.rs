@@ -7,6 +7,7 @@ use crate::state::{
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    pub admin: String,
     pub owner: String, // owner of campaign
     // info detail
     pub campaign_name: String,

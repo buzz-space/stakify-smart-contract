@@ -1,19 +1,17 @@
-use std::collections::HashMap;
-
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order, QueryRequest,
-    Response, StdError, StdResult, Uint128, WasmMsg, WasmQuery,
+    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
+    StdError, StdResult, Uint128, WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{
-    AssetToken, CampaignInfo, CampaignInfoResult, NftInfo, NftStake, RewardRate,
-    StakerRewardAssetInfo, TokenInfo, CAMPAIGN_INFO, NFTS, PREVIOUS_TOTAL_REWARD, STAKERS_INFO,
-    TERM_EXPIRATION_TIMES, TERM_REWARD_RATES, TOKEN_IDS, TOTAL_STAKING_BY_TERM,
+    AssetToken, CampaignInfo, CampaignInfoResult, Config, NftInfo, NftStake, RewardRate,
+    StakerRewardAssetInfo, TokenInfo, CAMPAIGN_INFO, CONFIG, NFTS, PREVIOUS_TOTAL_REWARD,
+    STAKERS_INFO, TERM_EXPIRATION_TIMES, TERM_REWARD_RATES, TOKEN_IDS, TOTAL_STAKING_BY_TERM,
 };
 use crate::utils::{add_reward, calculate_reward, stake_nft, sub_reward, update_reward_rate};
 use cw20::Cw20ExecuteMsg;
@@ -85,6 +83,13 @@ pub fn instantiate(
     if total_percent != Uint128::from(100u128) {
         return Err(ContractError::InvalidFunds {});
     }
+
+    let config = Config {
+        owner: deps.api.addr_validate(&msg.admin).unwrap(),
+    };
+
+    // save config can reset pool
+    CONFIG.save(deps.storage, &config)?;
 
     // campaign info
     let campaign = CampaignInfo {
@@ -438,7 +443,7 @@ pub fn execute_unstake_nft(
     let expiration_times =
         TERM_EXPIRATION_TIMES.load(deps.storage, nft_info.lockup_term.value.to_string())?;
 
-    let new_nft_info = calculate_reward(
+    let (new_nft_info, _, _, _) = calculate_reward(
         nft_info,
         term_reward_rates,
         expiration_times,
@@ -513,6 +518,8 @@ pub fn execute_claim_reward(
     // load staker_info
     let mut staker_info = STAKERS_INFO.load(deps.storage, info.sender.clone())?;
 
+    let mut pending_reward_staker: Uint128 = Uint128::zero();
+
     // max time calc pending reward is campaign_info.end_time
     let mut current_time = env.block.time.seconds();
     if campaign_info.end_time < env.block.time.seconds() {
@@ -523,18 +530,18 @@ pub fn execute_claim_reward(
     for id in staker_info.token_ids.iter() {
         let nft_info = NFTS.load(deps.storage, id.clone())?;
 
-        if !nft_info.is_end_reward {
-            // load TERM_REWARD_RATES
-            let term_reward_rates =
-                TERM_REWARD_RATES.load(deps.storage, nft_info.lockup_term.value.to_string())?;
+        // load TERM_REWARD_RATES
+        let term_reward_rates =
+            TERM_REWARD_RATES.load(deps.storage, nft_info.lockup_term.value.to_string())?;
 
-            let total_staking =
-                TOTAL_STAKING_BY_TERM.load(deps.storage, nft_info.lockup_term.value.to_string())?;
+        let total_staking =
+            TOTAL_STAKING_BY_TERM.load(deps.storage, nft_info.lockup_term.value.to_string())?;
 
-            let expiration_times =
-                TERM_EXPIRATION_TIMES.load(deps.storage, nft_info.lockup_term.value.to_string())?;
+        let expiration_times =
+            TERM_EXPIRATION_TIMES.load(deps.storage, nft_info.lockup_term.value.to_string())?;
 
-            let mut new_nft_info = calculate_reward(
+        let (mut new_nft_info, new_term_reward_rates, new_total_staking, new_expiration_times) =
+            calculate_reward(
                 nft_info,
                 term_reward_rates.clone(),
                 expiration_times,
@@ -544,30 +551,33 @@ pub fn execute_claim_reward(
                 campaign_info.reward_per_second,
             );
 
-            staker_info.reward_debt =
-                add_reward(staker_info.reward_debt, new_nft_info.pending_reward).unwrap();
+        pending_reward_staker =
+            add_reward(pending_reward_staker, new_nft_info.pending_reward).unwrap();
 
-            //update pending reward for nft = 0 because pending reward in nft are transferred to staker
-            new_nft_info.pending_reward = Uint128::zero();
-            NFTS.save(deps.storage, id.clone(), &new_nft_info)?;
+        //update pending reward for nft = 0 because pending reward in nft are transferred to staker
+        new_nft_info.pending_reward = Uint128::zero();
+        NFTS.save(deps.storage, id.clone(), &new_nft_info)?;
 
-            // load TOTAL_STAKING_BY_TERM
-            let total_staking_by_term = TOTAL_STAKING_BY_TERM
-                .load(deps.storage, new_nft_info.lockup_term.value.to_string())?;
-
-            // update term reward rates
-            let (updated_reward_rate, _) =
-                update_reward_rate(term_reward_rates, total_staking_by_term, current_time, 0);
-            TERM_REWARD_RATES.save(
-                deps.storage,
-                new_nft_info.lockup_term.value.to_string(),
-                &updated_reward_rate,
-            )?;
-        }
+        // update term reward rates
+        TERM_REWARD_RATES.save(
+            deps.storage,
+            new_nft_info.lockup_term.value.to_string(),
+            &new_term_reward_rates,
+        )?;
+        TOTAL_STAKING_BY_TERM.save(
+            deps.storage,
+            new_nft_info.lockup_term.value.to_string(),
+            &new_total_staking,
+        )?;
+        TERM_EXPIRATION_TIMES.save(
+            deps.storage,
+            new_nft_info.lockup_term.value.to_string(),
+            &new_expiration_times,
+        )?;
     }
 
     // amount reward claim must be less than or equal reward in staker
-    if amount > staker_info.reward_debt {
+    if amount > staker_info.reward_debt + pending_reward_staker {
         return Err(ContractError::InsufficientBalance {});
     }
 
@@ -592,7 +602,9 @@ pub fn execute_claim_reward(
 
             // update staker info
             staker_info.reward_claimed = add_reward(staker_info.reward_claimed, amount).unwrap();
-            staker_info.reward_debt = sub_reward(staker_info.reward_debt, amount).unwrap();
+            // staker_info.reward_debt = sub_reward(staker_info.reward_debt, amount).unwrap();
+            // staker_info.reward_debt = staker_info.reward_debt + pending_reward_staker - amount;
+
             STAKERS_INFO.save(deps.storage, info.sender, &staker_info)?;
 
             // update reward total and reward claimed for campaign
@@ -721,11 +733,12 @@ pub fn execute_reset_pool(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    let config: Config = CONFIG.load(deps.storage)?;
     // load campaign info
     let campaign_info: CampaignInfo = CAMPAIGN_INFO.load(deps.storage)?;
 
     // permission check
-    if info.sender != campaign_info.owner {
+    if info.sender != config.owner {
         return Err(ContractError::Unauthorized {});
     }
 
@@ -737,32 +750,48 @@ pub fn execute_reset_pool(
 
     // load TERM_REWARD_RATES
     for term in campaign_info.lockup_term.iter() {
-        let mut term_rates = TERM_REWARD_RATES.load(deps.storage, term.value.to_string())?;
-        let expiration_times = TERM_EXPIRATION_TIMES.load(deps.storage, term.value.to_string())?;
+        let mut term_reward_rates = TERM_REWARD_RATES.load(deps.storage, term.value.to_string())?;
+        let mut expiration_times =
+            TERM_EXPIRATION_TIMES.load(deps.storage, term.value.to_string())?;
         let mut total_staking = TOTAL_STAKING_BY_TERM.load(deps.storage, term.value.to_string())?;
-        for &end_time in &expiration_times {
-            if end_time <= current_time {
-                let result = (total_staking as i64).saturating_add(-1);
-                total_staking = if result <= 0 { 0 } else { result } as u64;
-                if let Some(reward) = term_rates
-                    .iter_mut()
-                    .find(|item| item.timestamp == current_time)
-                {
-                    reward.rate = total_staking;
-                } else {
-                    term_rates.push(RewardRate {
-                        timestamp: current_time,
-                        rate: total_staking,
-                    });
-                }
-            }
+
+        let token_ids = TOKEN_IDS.load(deps.storage, term.value.to_string())?;
+
+        for token_id in token_ids.iter() {
+            let nft_info = NFTS.load(deps.storage, token_id.clone())?;
+
+            let (new_nft_info, new_term_reward_rates, new_total_staking, new_expiration_times) =
+                calculate_reward(
+                    nft_info,
+                    term_reward_rates.clone(),
+                    expiration_times.clone(),
+                    total_staking,
+                    current_time,
+                    campaign_info.end_time,
+                    campaign_info.reward_per_second,
+                );
+            term_reward_rates = new_term_reward_rates;
+            total_staking = new_total_staking;
+            expiration_times = new_expiration_times;
+            NFTS.save(deps.storage, token_id.clone(), &new_nft_info)?;
         }
+        let updated_term_reward_rates = term_reward_rates
+            .last()
+            .map_or(Vec::new(), |last_element| vec![last_element.clone()]);
+
+        TERM_REWARD_RATES.save(
+            deps.storage,
+            term.value.to_string(),
+            &updated_term_reward_rates,
+        )?;
+        TOTAL_STAKING_BY_TERM.save(deps.storage, term.value.to_string(), &total_staking)?;
+        TERM_EXPIRATION_TIMES.save(deps.storage, term.value.to_string(), &expiration_times)?;
     }
 
-    Ok(Response::new().add_attributes([
-        ("action", "reset_pool"),
-        ("owner", campaign_info.owner.as_ref()),
-    ]))
+    Ok(
+        Response::new()
+            .add_attributes([("action", "reset_pool"), ("admin", config.owner.as_ref())]),
+    )
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -825,7 +854,7 @@ fn query_nft_info(deps: Deps, env: Env, token_id: String) -> Result<NftInfo, Con
     let expiration_times =
         TERM_EXPIRATION_TIMES.load(deps.storage, nft_info.lockup_term.value.to_string())?;
 
-    let new_nft_info = calculate_reward(
+    let (new_nft_info, _, _, _) = calculate_reward(
         nft_info,
         term_reward_rates,
         expiration_times,

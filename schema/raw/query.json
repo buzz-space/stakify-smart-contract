@@ -39,27 +39,6 @@
     {
       "type": "object",
       "required": [
-        "nft"
-      ],
-      "properties": {
-        "nft": {
-          "type": "object",
-          "required": [
-            "token_id"
-          ],
-          "properties": {
-            "token_id": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "nft_staked"
       ],
       "properties": {
@@ -71,29 +50,6 @@
           "properties": {
             "owner": {
               "$ref": "#/definitions/Addr"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "nfts"
-      ],
-      "properties": {
-        "nfts": {
-          "type": "object",
-          "properties": {
-            "limit": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "format": "uint32",
-              "minimum": 0.0
             }
           },
           "additionalProperties": false
@@ -122,6 +78,39 @@
       "properties": {
         "token_ids": {
           "type": "object",
+          "required": [
+            "term_value"
+          ],
+          "properties": {
+            "term_value": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "term_reward_rates"
+      ],
+      "properties": {
+        "term_reward_rates": {
+          "type": "object",
+          "required": [
+            "term_value"
+          ],
+          "properties": {
+            "term_value": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
           "additionalProperties": false
         }
       },
