@@ -45,12 +45,122 @@ const { exec } = require("child_process");
 //     }
 // );
 
-let count = 1;
-setInterval(() => {
-    console.log(count);
+// let count = 1;
+// setInterval(() => {
+//     console.log(count);
 
+//     exec(
+//         `beaker wasm execute cw721_metadata_onchain --raw '{"mint":{"token_id":"Buzz${count.toString()}", "owner": "aura1y9ts00xzxywqx3dxcyyg2xsqd8edackqcr9glm", "token_uri":"ipfs://QmNjiRJ4UUMWjZ7cBQus7GgaNYLAbvN1vvjsqSrbXEwUVE/100.json",  "extension": {"image": null, "image_data": null,"external_url": null, "description": null,"name": null,"attributes": null,"background_color": null,"animation_url": null, "youtube_url": null}}}' --signer-account signer --network euphoria`,
+//         (error, stdout, stderr) => {
+//             // if (error) {
+//             //     console.error(`exec error: ${error}`);
+//             //     return;
+//             // }
+//             console.log(`stdout: ${stdout}`);
+//             // console.error(`stderr: ${stderr}`);
+//         }
+//     );
+//     count++;
+// }, 1000);
+
+let arr = [
+    "Buzz3728",
+    "Buzz3981",
+    "Buzz4038",
+    "Buzz4144",
+    "Buzz420",
+    "Buzz4258",
+    "Buzz4275",
+    "Buzz4352",
+    "Buzz4364",
+    "Buzz4380",
+    "Buzz4397",
+    "Buzz4436",
+    "Buzz4476",
+    "Buzz4487",
+    "Buzz4516",
+    "Buzz453",
+    "Buzz4554",
+    "Buzz4578",
+    "Buzz459",
+    "Buzz4611",
+    "Buzz4634",
+    "Buzz4645",
+    "Buzz4662",
+    "Buzz4667",
+    "Buzz4679",
+    "Buzz4685",
+    "Buzz4696",
+    "Buzz470",
+    "Buzz4708",
+    "Buzz4719",
+    "Buzz4724",
+    "Buzz4735",
+    "Buzz4741",
+    "Buzz4758",
+    "Buzz4763",
+    "Buzz4774",
+    "Buzz4780",
+    "Buzz4791",
+    "Buzz4798",
+    "Buzz48",
+    "Buzz480",
+    "Buzz4809",
+    "Buzz4814",
+    "Buzz4825",
+    "Buzz4831",
+    "Buzz4837",
+    "Buzz4842",
+    "Buzz485",
+    "Buzz4853",
+    "Buzz4859",
+    "Buzz4865",
+    "Buzz4870",
+    "Buzz4881",
+    "Buzz4887",
+    "Buzz4892",
+    "Buzz4898",
+    "Buzz4905",
+    "Buzz491",
+    "Buzz4910",
+    "Buzz4916",
+    "Buzz4921",
+    "Buzz4927",
+    "Buzz4933",
+    "Buzz4938",
+    "Buzz4944",
+    "Buzz4949",
+    "Buzz4955",
+    "Buzz4961",
+    "Buzz4966",
+    "Buzz497",
+    "Buzz4972",
+    "Buzz4977",
+    "Buzz4989",
+    "Buzz4994",
+    "Buzz5000",
+    "Buzz5006",
+    "Buzz5012",
+    "Buzz5017",
+    "Buzz502",
+    "Buzz5023",
+    "Buzz5028",
+    "Buzz5034",
+    "Buzz5040",
+    "Buzz5045",
+    "Buzz5051",
+    "Buzz5057",
+    "Buzz5062",
+    "Buzz5072",
+    "Buzz5078",
+    "Buzz508",
+];
+
+let i = 0;
+setInterval(() => {
     exec(
-        `beaker wasm execute cw721_metadata_onchain --raw '{"mint":{"token_id":"Buzz${count.toString()}", "owner": "aura1y9ts00xzxywqx3dxcyyg2xsqd8edackqcr9glm", "token_uri":"ipfs://QmNjiRJ4UUMWjZ7cBQus7GgaNYLAbvN1vvjsqSrbXEwUVE/100.json",  "extension": {"image": null, "image_data": null,"external_url": null, "description": null,"name": null,"attributes": null,"background_color": null,"animation_url": null, "youtube_url": null}}}' --signer-account signer --network euphoria`,
+        `beaker wasm execute campaign --raw '{"stake_nfts":{"nfts":[{"token_id":"${arr[i]}","lockup_term":86400}]}}' --signer-account signer --network euphoria
+            `,
         (error, stdout, stderr) => {
             // if (error) {
             //     console.error(`exec error: ${error}`);
@@ -60,8 +170,25 @@ setInterval(() => {
             // console.error(`stderr: ${stderr}`);
         }
     );
-    count++;
-}, 1000);
+    i++;
+}, 2000);
+
+// setInterval(() => {
+//     console.log(count);
+
+//     exec(
+//         `beaker wasm execute cw721_metadata_onchain --raw '{"mint":{"token_id":"Buzz${count.toString()}", "owner": "aura1y9ts00xzxywqx3dxcyyg2xsqd8edackqcr9glm", "token_uri":"ipfs://QmNjiRJ4UUMWjZ7cBQus7GgaNYLAbvN1vvjsqSrbXEwUVE/100.json",  "extension": {"image": null, "image_data": null,"external_url": null, "description": null,"name": null,"attributes": null,"background_color": null,"animation_url": null, "youtube_url": null}}}' --signer-account signer --network euphoria`,
+//         (error, stdout, stderr) => {
+//             // if (error) {
+//             //     console.error(`exec error: ${error}`);
+//             //     return;
+//             // }
+//             console.log(`stdout: ${stdout}`);
+//             // console.error(`stderr: ${stderr}`);
+//         }
+//     );
+//     count++;
+// }, 1000);
 
 // let arrRewardRate = [];
 // let arrEndTime = [];
