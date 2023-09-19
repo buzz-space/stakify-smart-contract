@@ -1,10 +1,13 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 
-use crate::state::{AssetToken, CampaignInfo, LockupTerm, NftInfo, NftStake, StakedInfoResult};
+use crate::state::{
+    AssetToken, CampaignInfo, LockupTerm, NftInfo, NftStake, RewardRate, StakerRewardAssetInfo,
+};
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    pub admin: String,
     pub owner: String, // owner of campaign
     // info detail
     pub campaign_name: String,
@@ -26,12 +29,14 @@ pub enum ExecuteMsg {
     // user can stake 1 or many nfts to this campaign
     StakeNfts { nfts: Vec<NftStake> },
 
+    UnStakeNft { token_id: String },
+
     // user can claim reward
     ClaimReward { amount: Uint128 },
 
     WithdrawReward {},
 
-    UnStakeNft { token_id: String },
+    ResetPool {},
 }
 
 #[cw_serde]
@@ -43,18 +48,15 @@ pub enum QueryMsg {
     #[returns(NftInfo)]
     NftInfo { token_id: String },
 
-    #[returns(NftInfo)]
-    Nft { token_id: String },
-
-    #[returns(StakedInfoResult)]
+    #[returns(StakerRewardAssetInfo)]
     NftStaked { owner: Addr },
-
-    #[returns(Vec<NftInfo>)]
-    Nfts { limit: Option<u32> },
 
     #[returns(Uint128)]
     TotalPendingReward {},
 
     #[returns(Vec<String>)]
-    TokenIds {},
+    TokenIds { term_value: u64 },
+
+    #[returns(Vec<RewardRate>)]
+    TermRewardRates { term_value: u64 },
 }
