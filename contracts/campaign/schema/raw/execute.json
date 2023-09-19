@@ -50,6 +50,27 @@
     {
       "type": "object",
       "required": [
+        "un_stake_nft"
+      ],
+      "properties": {
+        "un_stake_nft": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "token_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "claim_reward"
       ],
       "properties": {
@@ -84,19 +105,11 @@
     {
       "type": "object",
       "required": [
-        "un_stake_nft"
+        "reset_pool"
       ],
       "properties": {
-        "un_stake_nft": {
+        "reset_pool": {
           "type": "object",
-          "required": [
-            "token_id"
-          ],
-          "properties": {
-            "token_id": {
-              "type": "string"
-            }
-          },
           "additionalProperties": false
         }
       },
