@@ -171,13 +171,13 @@ async function main(contract_name) {
     //     end_time: 1690615225,
     // };
     const instantiateMsg = {
-        campaign_code_id: 1345,
-        allow_create_for_all: true,
+        campaign_code_id: 1348,
+        allow_create_for_all: false,
     };
 
-    // // instantiate contract
-    // console.log("2. Instantiating contract...");
-    // let instantiateResponse = await instantiate(storeCodeResponse.codeId, instantiateMsg);
+    // instantiate contract
+    console.log("2. Instantiating contract...");
+    let instantiateResponse = await instantiate(storeCodeResponse.codeId, instantiateMsg);
 
     console.log("Contract setup completed!");
 }
