@@ -2211,6 +2211,155 @@ mod tests {
                 }
             );
 
+            // TODO:
+
+            // // term_reward_rates
+            // let term_reward_rates: Vec<RewardRate> = app
+            //     .wrap()
+            //     .query_wasm_smart(
+            //         Addr::unchecked("contract3"),
+            //         &CampaignQueryMsg::TermRewardRates { term_value: 30 },
+            //     )
+            //     .unwrap();
+
+            // assert_eq!(term_reward_rates, vec![]);
+
+            // reset pool
+            let reset_pool_msg = CampaignExecuteMsg::ResetPool {};
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(ADMIN.to_string()),
+                Addr::unchecked("contract3"),
+                &reset_pool_msg,
+                &[],
+            );
+
+            assert!(response.is_ok());
+
+            // // term_reward_rates
+            // let term_reward_rates: Vec<RewardRate> = app
+            //     .wrap()
+            //     .query_wasm_smart(
+            //         Addr::unchecked("contract3"),
+            //         &CampaignQueryMsg::TermRewardRates { term_value: 10 },
+            //     )
+            //     .unwrap();
+
+            // assert_eq!(term_reward_rates, vec![]);
+
+            // get nft info id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        token_id: "1".to_string(),
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 10,
+                    end_time: start_time_1 + 10
+                }
+            );
+
+            // get nft info id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        token_id: "2".to_string(),
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 10,
+                    end_time: start_time_2 + 10
+                }
+            );
+
+            // get nft info id 3
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        token_id: "3".to_string(),
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    token_id: "3".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(105000u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_3,
+                    time_calc: start_time_3 + 30,
+                    end_time: start_time_3 + 30
+                }
+            );
+
+            // get nft info id 6
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        token_id: "6".to_string(),
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    token_id: "6".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(122500u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_6,
+                    time_calc: start_time_6 + 30,
+                    end_time: start_time_6 + 30
+                }
+            );
+
             // stake nft token_id 7
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
                 nfts: vec![NftStake {
@@ -2480,6 +2629,19 @@ mod tests {
                     reward_claimed: Uint128::zero()
                 },
             );
+
+            // reset pool
+            let reset_pool_msg = CampaignExecuteMsg::ResetPool {};
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(ADMIN.to_string()),
+                Addr::unchecked("contract3"),
+                &reset_pool_msg,
+                &[],
+            );
+
+            assert!(response.is_ok());
 
             // increase 10 second
             app.set_block(BlockInfo {
@@ -5115,6 +5277,20 @@ mod tests {
                 height: app.block_info().height + 5,
                 chain_id: app.block_info().chain_id,
             });
+
+            // reset pool
+            let reset_pool_msg = CampaignExecuteMsg::ResetPool {};
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(USER_1.to_string()),
+                Addr::unchecked("contract3"),
+                &reset_pool_msg,
+                &[],
+            );
+
+            // err with USER_1 is not owner
+            assert!(response.is_err());
 
             // stake nft token_id 3,4
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {

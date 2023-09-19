@@ -748,6 +748,8 @@ pub fn execute_reset_pool(
         current_time = campaign_info.end_time;
     }
 
+    let mut current_total_reward = PREVIOUS_TOTAL_REWARD.load(deps.storage)?;
+
     // load TERM_REWARD_RATES
     for term in campaign_info.lockup_term.iter() {
         let mut term_reward_rates = TERM_REWARD_RATES.load(deps.storage, term.value.to_string())?;
@@ -775,6 +777,30 @@ pub fn execute_reset_pool(
             expiration_times = new_expiration_times;
             NFTS.save(deps.storage, token_id.clone(), &new_nft_info)?;
         }
+
+        // calculate total pending reward in current reward_rates
+        if term_reward_rates.len() > 1 {
+            for i in 0..(term_reward_rates.len() - 1) {
+                let current = &term_reward_rates[i];
+                let next = &term_reward_rates[i + 1];
+
+                if current.rate != 0 && next.timestamp > current.timestamp {
+                    let duration = (next.timestamp - current.timestamp) as u128;
+                    let reward_per_second = campaign_info.reward_per_second.u128();
+                    let term_percent = term.percent.u128();
+
+                    let product = duration
+                        .saturating_mul(reward_per_second)
+                        .saturating_mul(term_percent)
+                        .saturating_div(100u128);
+
+                    current_total_reward =
+                        Uint128::from(current_total_reward.u128().saturating_add(product));
+                }
+            }
+        }
+
+        // update reward rates for future
         let updated_term_reward_rates = term_reward_rates
             .last()
             .map_or(Vec::new(), |last_element| vec![last_element.clone()]);
@@ -787,6 +813,8 @@ pub fn execute_reset_pool(
         TOTAL_STAKING_BY_TERM.save(deps.storage, term.value.to_string(), &total_staking)?;
         TERM_EXPIRATION_TIMES.save(deps.storage, term.value.to_string(), &expiration_times)?;
     }
+
+    PREVIOUS_TOTAL_REWARD.save(deps.storage, &current_total_reward)?;
 
     Ok(
         Response::new()
