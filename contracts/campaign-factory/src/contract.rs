@@ -10,7 +10,7 @@ use crate::{
 // use campaign::msg::ExecuteMsg as CampaignExecuteMsg;
 use campaign::msg::InstantiateMsg as CampaignInstantiateMsg;
 use campaign::msg::QueryMsg as CampaignQueryMsg;
-use campaign::state::CampaignInfoResult;
+use campaign::state::CampaignInfo;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -186,7 +186,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
     let reply = parse_reply_instantiate_data(msg).unwrap();
 
     let campaign_contract = &reply.contract_address;
-    let campaign_info: CampaignInfoResult =
+    let campaign_info: CampaignInfo =
         query_pair_info_from_pair(&deps.querier, Addr::unchecked(campaign_contract))?;
 
     let campaign_key = NUMBER_OF_CAMPAIGNS.load(deps.storage)? + 1;
@@ -197,13 +197,13 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
         &FactoryCampaign {
             owner: campaign_info.owner.clone(),
             campaign_addr: deps.api.addr_validate(campaign_contract)?,
-            reward_token: campaign_info.reward_token_info.info,
+            reward_token: campaign_info.reward_token.info,
             allowed_collection: campaign_info.allowed_collection,
         },
     )?;
 
     // increase campaign count
-    NUMBER_OF_CAMPAIGNS.save(deps.storage, &(campaign_key))?;
+    NUMBER_OF_CAMPAIGNS.save(deps.storage, &campaign_key)?;
 
     let mut addr_campaigns = ADDR_CAMPAIGNS.load(deps.storage)?;
     addr_campaigns.push(campaign_contract.clone());
@@ -270,8 +270,8 @@ pub fn query_addr_campaigns(deps: Deps) -> StdResult<Vec<String>> {
 fn query_pair_info_from_pair(
     querier: &QuerierWrapper,
     pair_contract: Addr,
-) -> StdResult<CampaignInfoResult> {
-    let pair_info: CampaignInfoResult = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+) -> StdResult<CampaignInfo> {
+    let pair_info: CampaignInfo = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: pair_contract.to_string(),
         msg: to_binary(&CampaignQueryMsg::CampaignInfo {})?,
     }))?;

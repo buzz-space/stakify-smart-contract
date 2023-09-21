@@ -1,6 +1,6 @@
 use cosmwasm_std::{DivideByZeroError, OverflowError, Uint128};
 
-use crate::state::{NftInfo, NftStake, RewardRate};
+use crate::state::{NftInfo, RewardRate};
 
 /// Calculates the reward amount
 pub fn add_reward(current_reward: Uint128, calc_reward: Uint128) -> Result<Uint128, OverflowError> {
@@ -64,7 +64,7 @@ pub fn stake_nft(
     expiration_times: Vec<u64>,
     mut arr_reward_rate: Vec<RewardRate>,
     total: u64,
-    nft: NftStake,
+    nft: NftInfo,
     timestamp: u64,
 ) -> (Vec<u64>, Vec<RewardRate>, u64) {
     let mut new_expiration_times: Vec<u64> = vec![];
@@ -81,7 +81,7 @@ pub fn stake_nft(
         }
     }
 
-    new_expiration_times.push(timestamp + nft.lockup_term);
+    new_expiration_times.push(nft.end_time);
 
     let (final_reward_rate, new_total) =
         update_reward_rate(arr_reward_rate, total_nft, timestamp, 1);
