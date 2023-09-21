@@ -32,14 +32,11 @@
         "stake_nfts": {
           "type": "object",
           "required": [
-            "nfts"
+            "stake_info"
           ],
           "properties": {
-            "nfts": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/NftStake"
-              }
+            "stake_info": {
+              "$ref": "#/definitions/NftStake"
             }
           },
           "additionalProperties": false
@@ -56,11 +53,11 @@
         "un_stake_nft": {
           "type": "object",
           "required": [
-            "token_id"
+            "unstake_info"
           ],
           "properties": {
-            "token_id": {
-              "type": "string"
+            "unstake_info": {
+              "$ref": "#/definitions/NftKey"
             }
           },
           "additionalProperties": false
@@ -117,11 +114,31 @@
     }
   ],
   "definitions": {
+    "NftKey": {
+      "type": "object",
+      "required": [
+        "key",
+        "lockup_term"
+      ],
+      "properties": {
+        "key": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "lockup_term": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
     "NftStake": {
       "type": "object",
       "required": [
         "lockup_term",
-        "token_id"
+        "token_ids"
       ],
       "properties": {
         "lockup_term": {
@@ -129,8 +146,11 @@
           "format": "uint64",
           "minimum": 0.0
         },
-        "token_id": {
-          "type": "string"
+        "token_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
