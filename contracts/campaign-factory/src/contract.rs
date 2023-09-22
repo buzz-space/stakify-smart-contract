@@ -10,7 +10,7 @@ use crate::{
 // use campaign::msg::ExecuteMsg as CampaignExecuteMsg;
 use campaign::msg::InstantiateMsg as CampaignInstantiateMsg;
 use campaign::msg::QueryMsg as CampaignQueryMsg;
-use campaign::state::CampaignInfoResult;
+use campaign::state::CampaignInfo;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -59,17 +59,9 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::UpdateConfig {
-            owner,
             campaign_code_id,
             allow_create_for_all,
-        } => execute_update_config(
-            deps,
-            env,
-            info,
-            owner,
-            campaign_code_id,
-            allow_create_for_all,
-        ),
+        } => execute_update_config(deps, env, info, campaign_code_id, allow_create_for_all),
         ExecuteMsg::CreateCampaign { create_campaign } => {
             execute_create_campaign(deps, env, info, create_campaign)
         }
@@ -81,7 +73,6 @@ pub fn execute_update_config(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    owner: Option<Addr>,
     campaign_code_id: Option<u64>,
     allow_create_for_all: Option<bool>,
 ) -> Result<Response, ContractError> {
@@ -91,12 +82,6 @@ pub fn execute_update_config(
     if info.sender != config.owner {
         return Err(ContractError::Unauthorized {});
     }
-
-    config.owner = if let Some(new_owner) = owner {
-        new_owner
-    } else {
-        config.owner
-    };
 
     config.campaign_code_id = if let Some(new_campaign_code_id) = campaign_code_id {
         new_campaign_code_id
@@ -178,6 +163,7 @@ pub fn execute_create_campaign(
                 admin: Some(env.contract.address.to_string()),
                 label: "pair".to_string(),
                 msg: to_binary(&CampaignInstantiateMsg {
+                    admin: config.owner.to_string(),
                     owner: create_campaign.owner,
                     campaign_name: create_campaign.campaign_name,
                     campaign_image: create_campaign.campaign_image,
@@ -200,7 +186,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
     let reply = parse_reply_instantiate_data(msg).unwrap();
 
     let campaign_contract = &reply.contract_address;
-    let campaign_info: CampaignInfoResult =
+    let campaign_info: CampaignInfo =
         query_pair_info_from_pair(&deps.querier, Addr::unchecked(campaign_contract))?;
 
     let campaign_key = NUMBER_OF_CAMPAIGNS.load(deps.storage)? + 1;
@@ -211,13 +197,13 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
         &FactoryCampaign {
             owner: campaign_info.owner.clone(),
             campaign_addr: deps.api.addr_validate(campaign_contract)?,
-            reward_token: campaign_info.reward_token_info.info,
+            reward_token: campaign_info.reward_token.info,
             allowed_collection: campaign_info.allowed_collection,
         },
     )?;
 
     // increase campaign count
-    NUMBER_OF_CAMPAIGNS.save(deps.storage, &(campaign_key))?;
+    NUMBER_OF_CAMPAIGNS.save(deps.storage, &campaign_key)?;
 
     let mut addr_campaigns = ADDR_CAMPAIGNS.load(deps.storage)?;
     addr_campaigns.push(campaign_contract.clone());
@@ -284,8 +270,8 @@ pub fn query_addr_campaigns(deps: Deps) -> StdResult<Vec<String>> {
 fn query_pair_info_from_pair(
     querier: &QuerierWrapper,
     pair_contract: Addr,
-) -> StdResult<CampaignInfoResult> {
-    let pair_info: CampaignInfoResult = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+) -> StdResult<CampaignInfo> {
+    let pair_info: CampaignInfo = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: pair_contract.to_string(),
         msg: to_binary(&CampaignQueryMsg::CampaignInfo {})?,
     }))?;

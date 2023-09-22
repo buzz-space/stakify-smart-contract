@@ -63,6 +63,6 @@ pub enum ContractError {
     #[error("## Empty reward pool ##")]
     EmptyReward {},
 
-    #[error("## Empty token_id: {token_id:?} ##")]
-    EmptyNft { token_id: String },
+    #[error("## Empty token_id: {key:?} ##")]
+    EmptyNft { key: u64 },
 }

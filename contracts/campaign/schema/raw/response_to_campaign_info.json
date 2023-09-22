@@ -14,7 +14,6 @@
     "reward_per_second",
     "reward_token",
     "start_time",
-    "time_calc_nft",
     "total_reward",
     "total_reward_claimed"
   ],
@@ -57,11 +56,6 @@
       "$ref": "#/definitions/AssetToken"
     },
     "start_time": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "time_calc_nft": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0

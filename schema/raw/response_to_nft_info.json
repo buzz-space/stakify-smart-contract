@@ -5,10 +5,12 @@
   "required": [
     "end_time",
     "is_end_reward",
+    "key",
     "lockup_term",
     "owner",
     "pending_reward",
     "start_time",
+    "time_calc",
     "token_id"
   ],
   "properties": {
@@ -20,6 +22,11 @@
     "is_end_reward": {
       "type": "boolean"
     },
+    "key": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
     "lockup_term": {
       "$ref": "#/definitions/LockupTerm"
     },
@@ -30,6 +37,11 @@
       "$ref": "#/definitions/Uint128"
     },
     "start_time": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "time_calc": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0

@@ -3,6 +3,7 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
+    "admin",
     "allowed_collection",
     "campaign_description",
     "campaign_image",
@@ -15,6 +16,9 @@
     "start_time"
   ],
   "properties": {
+    "admin": {
+      "type": "string"
+    },
     "allowed_collection": {
       "type": "string"
     },

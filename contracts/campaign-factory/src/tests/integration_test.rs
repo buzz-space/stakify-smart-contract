@@ -19,8 +19,8 @@ mod tests {
             },
         };
         use campaign::state::{
-            AssetToken, CampaignInfoResult, LockupTerm, NftInfo, NftStake, StakedInfoResult,
-            TokenInfo,
+            AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, RewardRate,
+            StakerRewardAssetInfo, TokenInfo,
         };
         use campaign::{
             msg::{ExecuteMsg as CampaignExecuteMsg, QueryMsg as CampaignQueryMsg},
@@ -98,7 +98,6 @@ mod tests {
 
             // Update config
             let update_config = crate::msg::ExecuteMsg::UpdateConfig {
-                owner: Some(Addr::unchecked(USER_1)),
                 campaign_code_id: None,
                 allow_create_for_all: None,
             };
@@ -116,23 +115,6 @@ mod tests {
             // Execute update config
             let response = app.execute_contract(
                 Addr::unchecked(ADMIN.to_string()),
-                Addr::unchecked(factory_contract.clone()),
-                &update_config,
-                &[],
-            );
-
-            assert!(response.is_ok());
-
-            // Update config
-            let update_config = crate::msg::ExecuteMsg::UpdateConfig {
-                owner: Some(Addr::unchecked(ADMIN)),
-                campaign_code_id: None,
-                allow_create_for_all: None,
-            };
-
-            // Execute update config
-            let response = app.execute_contract(
-                Addr::unchecked(USER_1.to_string()),
                 Addr::unchecked(factory_contract.clone()),
                 &update_config,
                 &[],
@@ -288,11 +270,11 @@ mod tests {
                     allowed_collection: collection_contract.clone(),
                     lockup_term: vec![
                         LockupTerm {
-                            value: 10,
+                            value: 10u64,
                             percent: Uint128::new(30u128),
                         },
                         LockupTerm {
-                            value: 30,
+                            value: 30u64,
                             percent: Uint128::new(70u128),
                         },
                     ],
@@ -343,7 +325,7 @@ mod tests {
             assert_eq!(campaign_addr, vec!["contract3"]);
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -354,13 +336,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
                     },
@@ -375,18 +357,16 @@ mod tests {
                             percent: Uint128::new(70u128),
                         },
                     ],
-                    total_nft_staked: 0,
                     total_reward_claimed: Uint128::zero(),
                     total_reward: Uint128::zero(),
                     reward_per_second: Uint128::zero(),
-                    time_calc_nft: 0,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
             );
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -397,13 +377,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
                     },
@@ -418,11 +398,9 @@ mod tests {
                             percent: Uint128::new(70u128),
                         },
                     ],
-                    total_nft_staked: 0,
                     total_reward_claimed: Uint128::zero(),
                     total_reward: Uint128::zero(),
                     reward_per_second: Uint128::zero(),
-                    time_calc_nft: 0,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
@@ -486,14 +464,14 @@ mod tests {
             assert!(response.is_ok());
 
             // check reward token in campaign
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart("contract3", &CampaignQueryMsg::CampaignInfo {})
                 .unwrap();
 
             assert_eq!(
                 Uint128::from(MOCK_1000_TOKEN_AMOUNT),
-                campaign_info.reward_token_info.amount
+                campaign_info.reward_token.amount
             );
 
             // query balance of ADMIN in cw20 base token contract
@@ -533,10 +511,10 @@ mod tests {
 
             // stake nft token_id 1
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "1".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["1".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
             let start_time_1 = app.block_info().time.seconds();
 
@@ -556,7 +534,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "1".to_string(),
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
                     },
                 )
                 .unwrap();
@@ -564,6 +545,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 1,
                     token_id: "1".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -573,12 +555,13 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_1,
+                    time_calc: start_time_1,
                     end_time: start_time_1 + 10
                 }
             );
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -590,18 +573,10 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "1".to_string(),
-                        owner: Addr::unchecked(USER_1.to_string()),
-                        pending_reward: Uint128::from(0u128),
-                        lockup_term: LockupTerm {
-                            value: 10,
-                            percent: Uint128::from(30u128)
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_1,
-                        end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 1,
+                        lockup_term: 10
                     }],
                     reward_debt: Uint128::zero(),
                     reward_claimed: Uint128::zero()
@@ -621,7 +596,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "1".to_string(),
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
                     },
                 )
                 .unwrap();
@@ -629,6 +607,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 1,
                     token_id: "1".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(3000u128),
@@ -638,16 +617,17 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_1,
+                    time_calc: start_time_1 + 1,
                     end_time: start_time_1 + 10
                 }
             );
 
             // stake nft token_id 2
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "2".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["2".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
             let start_time_2 = app.block_info().time.seconds();
 
@@ -667,7 +647,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "1".to_string(),
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
                     },
                 )
                 .unwrap();
@@ -675,6 +658,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 1,
                     token_id: "1".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(3000u128),
@@ -684,6 +668,7 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_1,
+                    time_calc: start_time_1 + 1,
                     end_time: start_time_1 + 10
                 }
             );
@@ -694,7 +679,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "2".to_string(),
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
                     },
                 )
                 .unwrap();
@@ -702,6 +690,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 2,
                     token_id: "2".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -711,6 +700,7 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_2,
+                    time_calc: start_time_2,
                     end_time: start_time_2 + 10
                 }
             );
@@ -722,8 +712,72 @@ mod tests {
                 chain_id: app.block_info().chain_id,
             });
 
+            // get nft info token_id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(12000u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 7,
+                    end_time: start_time_1 + 10
+                }
+            );
+
+            // get nft info token_id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(9000u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 6,
+                    end_time: start_time_2 + 10
+                }
+            );
+
             // get staker info by USER_1
-            let staker_info: StakedInfoResult = app
+            let staker_info: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -735,36 +789,43 @@ mod tests {
 
             assert_eq!(
                 staker_info,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(12000u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128),
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(9000u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128),
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
-                        },
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
+                        }
                     ],
-                    reward_debt: Uint128::from(21000u128),
+                    reward_debt: Uint128::zero(),
                     reward_claimed: Uint128::zero()
                 }
+            );
+
+            // reward rates
+            let reward_rates: Vec<RewardRate> = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::TermRewardRates { term_value: 10 },
+                )
+                .unwrap();
+
+            assert_eq!(
+                reward_rates,
+                vec![
+                    RewardRate {
+                        timestamp: 1571797439,
+                        rate: 1
+                    },
+                    RewardRate {
+                        timestamp: 1571797440,
+                        rate: 2
+                    }
+                ]
             );
 
             // USER_1 claim reward msg
@@ -782,8 +843,34 @@ mod tests {
 
             assert!(response.is_ok());
 
+            let reward_rates: Vec<RewardRate> = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::TermRewardRates { term_value: 10 },
+                )
+                .unwrap();
+
+            assert_eq!(
+                reward_rates,
+                vec![
+                    RewardRate {
+                        timestamp: 1571797439,
+                        rate: 1
+                    },
+                    RewardRate {
+                        timestamp: 1571797440,
+                        rate: 2
+                    },
+                    RewardRate {
+                        timestamp: 1571797446,
+                        rate: 2
+                    }
+                ]
+            );
+
             // get staker info
-            let staker_info: StakedInfoResult = app
+            let staker_info: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -795,35 +882,83 @@ mod tests {
 
             assert_eq!(
                 staker_info,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128),
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128),
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
-                        },
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
+                        }
                     ],
                     reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::from(21000u128),
+                }
+            );
+
+            // get nft info token_id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 7,
+                    end_time: start_time_1 + 10
+                }
+            );
+
+            // get nft info token_id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 6,
+                    end_time: start_time_2 + 10
                 }
             );
 
@@ -834,9 +969,76 @@ mod tests {
                 chain_id: app.block_info().chain_id,
             });
 
+            // get nft info token_id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(4500u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 10,
+                    end_time: start_time_1 + 10
+                }
+            );
+
+            // get nft info token_id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(4500u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 9,
+                    end_time: start_time_2 + 10
+                }
+            );
+
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "1".to_string(),
+                unstake_info: NftKey {
+                    key: 1,
+                    lockup_term: 10,
+                },
             };
 
             // Execute un stake nft
@@ -850,7 +1052,7 @@ mod tests {
             assert!(response.is_ok());
 
             // get staker info USER_1
-            let staker_info: StakedInfoResult = app
+            let staker_info: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -862,22 +1064,72 @@ mod tests {
 
             assert_eq!(
                 staker_info,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "2".to_string(),
-                        owner: Addr::unchecked(USER_1.to_string()),
-                        pending_reward: Uint128::from(4500u128),
-                        lockup_term: LockupTerm {
-                            value: 10,
-                            percent: Uint128::from(30u128),
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_2,
-                        end_time: start_time_2 + 10
-                    },],
-                    reward_debt: Uint128::from(9000u128),
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 2,
+                        lockup_term: 10
+                    }],
+                    reward_debt: Uint128::from(4500u128),
                     reward_claimed: Uint128::from(21000u128),
                 }
+            );
+
+            // get nft info token_id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(4500u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 9,
+                    end_time: start_time_2 + 10
+                }
+            );
+
+            let reward_rates: Vec<RewardRate> = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::TermRewardRates { term_value: 10 },
+                )
+                .unwrap();
+
+            assert_eq!(
+                reward_rates,
+                vec![
+                    RewardRate {
+                        timestamp: 1571797439,
+                        rate: 1
+                    },
+                    RewardRate {
+                        timestamp: 1571797440,
+                        rate: 2
+                    },
+                    RewardRate {
+                        timestamp: 1571797446,
+                        rate: 2
+                    }
+                ]
             );
 
             // get staker total pending reward
@@ -896,8 +1148,66 @@ mod tests {
                 chain_id: app.block_info().chain_id,
             });
 
+            let reward_rates: Vec<RewardRate> = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::TermRewardRates { term_value: 10 },
+                )
+                .unwrap();
+
+            assert_eq!(
+                reward_rates,
+                vec![
+                    RewardRate {
+                        timestamp: 1571797439,
+                        rate: 1
+                    },
+                    RewardRate {
+                        timestamp: 1571797440,
+                        rate: 2
+                    },
+                    RewardRate {
+                        timestamp: 1571797446,
+                        rate: 2
+                    }
+                ]
+            );
+
+            // get nft info token_id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(7500u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 10,
+                    end_time: start_time_2 + 10
+                }
+            );
+
             // get staker info
-            let staker_info: StakedInfoResult = app
+            let staker_info: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -909,20 +1219,12 @@ mod tests {
 
             assert_eq!(
                 staker_info,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "2".to_string(),
-                        owner: Addr::unchecked(USER_1.to_string()),
-                        pending_reward: Uint128::from(7500u128),
-                        lockup_term: LockupTerm {
-                            value: 10,
-                            percent: Uint128::from(30u128),
-                        },
-                        is_end_reward: true,
-                        start_time: start_time_2,
-                        end_time: start_time_2 + 10
-                    },],
-                    reward_debt: Uint128::from(12000u128),
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 2,
+                        lockup_term: 10
+                    }],
+                    reward_debt: Uint128::from(4500u128),
                     reward_claimed: Uint128::from(21000u128)
                 }
             );
@@ -950,7 +1252,7 @@ mod tests {
             assert!(response.is_ok());
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -961,13 +1263,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info,
                         amount: Uint128::from(12000u128),
                     },
@@ -982,18 +1284,16 @@ mod tests {
                             percent: Uint128::new(70u128),
                         },
                     ],
-                    total_nft_staked: 1,
                     total_reward_claimed: Uint128::from(21000u128),
                     total_reward: Uint128::from(1000000u128),
                     reward_per_second: Uint128::from(10000u128),
-                    time_calc_nft: current_block_time + 110,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
             );
 
             // get staker info
-            let staker_info: StakedInfoResult = app
+            let staker_info: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1005,20 +1305,12 @@ mod tests {
 
             assert_eq!(
                 staker_info,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "2".to_string(),
-                        owner: Addr::unchecked(USER_1.to_string()),
-                        pending_reward: Uint128::from(7500u128),
-                        lockup_term: LockupTerm {
-                            value: 10,
-                            percent: Uint128::from(30u128),
-                        },
-                        is_end_reward: true,
-                        start_time: start_time_2,
-                        end_time: start_time_2 + 10
-                    },],
-                    reward_debt: Uint128::from(12000u128),
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 2,
+                        lockup_term: 10
+                    }],
+                    reward_debt: Uint128::from(4500u128),
                     reward_claimed: Uint128::from(21000u128),
                 }
             );
@@ -1287,7 +1579,7 @@ mod tests {
             );
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -1298,13 +1590,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
                     },
@@ -1319,54 +1611,10 @@ mod tests {
                             percent: Uint128::new(70u128),
                         },
                     ],
-                    total_nft_staked: 0,
+
                     total_reward_claimed: Uint128::zero(),
                     total_reward: Uint128::zero(),
                     reward_per_second: Uint128::zero(),
-                    time_calc_nft: 0,
-                    start_time: current_block_time + 10,
-                    end_time: current_block_time + 110,
-                }
-            );
-
-            // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
-                .wrap()
-                .query_wasm_smart(
-                    Addr::unchecked("contract3"),
-                    &CampaignQueryMsg::CampaignInfo {},
-                )
-                .unwrap();
-
-            // assert campaign info
-            assert_eq!(
-                campaign_info,
-                CampaignInfoResult {
-                    owner: Addr::unchecked(ADMIN.to_string()),
-                    campaign_name: "campaign name".to_string(),
-                    campaign_image: "campaign name".to_string(),
-                    campaign_description: "campaign name".to_string(),
-                    limit_per_staker: 4,
-                    reward_token_info: AssetToken {
-                        info: token_info.clone(),
-                        amount: Uint128::zero(),
-                    },
-                    allowed_collection: Addr::unchecked(collection_contract.clone()),
-                    lockup_term: vec![
-                        LockupTerm {
-                            value: 10,
-                            percent: Uint128::new(30u128),
-                        },
-                        LockupTerm {
-                            value: 30,
-                            percent: Uint128::new(70u128),
-                        },
-                    ],
-                    total_nft_staked: 0,
-                    total_reward_claimed: Uint128::zero(),
-                    total_reward: Uint128::zero(),
-                    reward_per_second: Uint128::zero(),
-                    time_calc_nft: 0,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
@@ -1430,14 +1678,14 @@ mod tests {
             assert!(response.is_ok());
 
             // check reward token in campaign
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart("contract3", &CampaignQueryMsg::CampaignInfo {})
                 .unwrap();
 
             assert_eq!(
                 Uint128::from(MOCK_1000_TOKEN_AMOUNT),
-                campaign_info.reward_token_info.amount
+                campaign_info.reward_token.amount
             );
 
             // query balance of ADMIN in cw20 base token contract
@@ -1477,10 +1725,10 @@ mod tests {
 
             // stake nft token_id 1
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "1".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["1".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
             let start_time_1 = app.block_info().time.seconds();
 
@@ -1496,10 +1744,10 @@ mod tests {
 
             // stake nft token_id 2
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "2".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["2".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
             let start_time_2 = app.block_info().time.seconds();
 
@@ -1519,7 +1767,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "1".to_string(),
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
                     },
                 )
                 .unwrap();
@@ -1527,6 +1778,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 1,
                     token_id: "1".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -1536,6 +1788,7 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_1,
+                    time_calc: start_time_1,
                     end_time: start_time_1 + 10
                 }
             );
@@ -1546,7 +1799,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "2".to_string(),
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
                     },
                 )
                 .unwrap();
@@ -1554,6 +1810,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 2,
                     token_id: "2".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -1563,12 +1820,13 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_2,
+                    time_calc: start_time_2,
                     end_time: start_time_2 + 10
                 }
             );
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1580,31 +1838,15 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         }
                     ],
                     reward_debt: Uint128::zero(),
@@ -1621,10 +1863,10 @@ mod tests {
 
             // stake nft token_id 6
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "6".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["6".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
             let start_time_6 = app.block_info().time.seconds();
 
@@ -1639,7 +1881,7 @@ mod tests {
             assert!(response.is_ok());
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1651,40 +1893,24 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(7500u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(7500u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(15000u128),
+                    reward_debt: Uint128::zero(),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1696,18 +1922,10 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "6".to_string(),
-                        owner: Addr::unchecked(USER_2.to_string()),
-                        pending_reward: Uint128::from(0u128),
-                        lockup_term: LockupTerm {
-                            value: 30,
-                            percent: Uint128::from(70u128)
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_6,
-                        end_time: start_time_6 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 1,
+                        lockup_term: 30
                     }],
                     reward_debt: Uint128::zero(),
                     reward_claimed: Uint128::zero()
@@ -1723,10 +1941,10 @@ mod tests {
 
             // stake nft token_id 3
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "3".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["3".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
             let start_time_3 = app.block_info().time.seconds();
 
@@ -1741,7 +1959,7 @@ mod tests {
             assert!(response.is_ok());
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1753,52 +1971,28 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(15000u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(15000u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "3".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(30000u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1810,24 +2004,15 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "6".to_string(),
-                        owner: Addr::unchecked(USER_2.to_string()),
-                        pending_reward: Uint128::from(35000u128),
-                        lockup_term: LockupTerm {
-                            value: 30,
-                            percent: Uint128::from(70u128)
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_6,
-                        end_time: start_time_6 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 1,
+                        lockup_term: 30
                     }],
-                    reward_debt: Uint128::from(35000u128),
+                    reward_debt: Uint128::zero(),
                     reward_claimed: Uint128::zero()
                 },
             );
-
             // increase 5 second
             app.set_block(BlockInfo {
                 time: app.block_info().time.plus_seconds(5),
@@ -1835,8 +2020,136 @@ mod tests {
                 chain_id: app.block_info().chain_id,
             });
 
+            // get nft info id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(15000u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 10,
+                    end_time: start_time_1 + 10
+                }
+            );
+
+            // get nft info id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(15000u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 10,
+                    end_time: start_time_2 + 10
+                }
+            );
+
+            // get nft info id 3
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "3".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(17500u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_3,
+                    time_calc: start_time_3 + 5,
+                    end_time: start_time_3 + 30
+                }
+            );
+
+            // get nft info id 6
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "6".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(52500u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_6,
+                    time_calc: start_time_6 + 10,
+                    end_time: start_time_6 + 30
+                }
+            );
+
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1848,46 +2161,22 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(15000u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(15000u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "3".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(17500u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(47500u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
@@ -1907,8 +2196,104 @@ mod tests {
 
             assert!(response.is_ok());
 
+            // get nft info id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 10,
+                    end_time: start_time_1 + 10
+                }
+            );
+
+            // get nft info id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 10,
+                    end_time: start_time_2 + 10
+                }
+            );
+
+            // get nft info id 3
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "3".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_3,
+                    time_calc: start_time_3 + 5,
+                    end_time: start_time_3 + 30
+                }
+            );
+
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -1920,43 +2305,19 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "3".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         }
                     ],
                     reward_debt: Uint128::from(0u128),
@@ -1971,12 +2332,239 @@ mod tests {
                 chain_id: app.block_info().chain_id,
             });
 
+            // get nft info id 3
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "3".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(105000u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_3,
+                    time_calc: start_time_3 + 30,
+                    end_time: start_time_3 + 30
+                }
+            );
+
+            // get nft info id 6
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "6".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(122500u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_6,
+                    time_calc: start_time_6 + 30,
+                    end_time: start_time_6 + 30
+                }
+            );
+
+            // // term_reward_rates
+            // let term_reward_rates: Vec<RewardRate> = app
+            //     .wrap()
+            //     .query_wasm_smart(
+            //         Addr::unchecked("contract3"),
+            //         &CampaignQueryMsg::TermRewardRates { term_value: 30 },
+            //     )
+            //     .unwrap();
+
+            // assert_eq!(term_reward_rates, vec![]);
+
+            // reset pool
+            let reset_pool_msg = CampaignExecuteMsg::ResetPool {};
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(ADMIN.to_string()),
+                Addr::unchecked("contract3"),
+                &reset_pool_msg,
+                &[],
+            );
+
+            assert!(response.is_ok());
+
+            // // term_reward_rates
+            // let term_reward_rates: Vec<RewardRate> = app
+            //     .wrap()
+            //     .query_wasm_smart(
+            //         Addr::unchecked("contract3"),
+            //         &CampaignQueryMsg::TermRewardRates { term_value: 10 },
+            //     )
+            //     .unwrap();
+
+            // assert_eq!(term_reward_rates, vec![]);
+
+            // get nft info id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 10,
+                    end_time: start_time_1 + 10
+                }
+            );
+
+            // get nft info id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 10,
+                    end_time: start_time_2 + 10
+                }
+            );
+
+            // get nft info id 3
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "3".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(105000u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_3,
+                    time_calc: start_time_3 + 30,
+                    end_time: start_time_3 + 30
+                }
+            );
+
+            // get nft info id 6
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "6".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(122500u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_6,
+                    time_calc: start_time_6 + 30,
+                    end_time: start_time_6 + 30
+                }
+            );
+
             // stake nft token_id 7
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "7".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["7".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
             let start_time_7 = app.block_info().time.seconds();
 
@@ -1996,7 +2584,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "7".to_string(),
+                        nft_key: NftKey {
+                            key: 3,
+                            lockup_term: 30,
+                        },
                     },
                 )
                 .unwrap();
@@ -2004,6 +2595,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 3,
                     token_id: "7".to_string(),
                     owner: Addr::unchecked(USER_2.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -2013,6 +2605,7 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_7,
+                    time_calc: start_time_7,
                     end_time: start_time_7 + 30
                 }
             );
@@ -2020,7 +2613,7 @@ mod tests {
             assert_eq!(current_block_time + 90, start_time_7);
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -2031,13 +2624,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::from(952500u128),
                     },
@@ -2052,30 +2645,128 @@ mod tests {
                             percent: Uint128::new(70u128),
                         },
                     ],
-                    total_nft_staked: 5,
                     total_reward_claimed: Uint128::from(47500u128),
                     total_reward: Uint128::from(1000000u128),
                     reward_per_second: Uint128::from(10000u128),
-                    time_calc_nft: current_block_time + 90,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
             );
 
             // query token_ids
-            let token_ids: Vec<String> = app
+            let nfts: Vec<NftInfo> = app
                 .wrap()
-                .query_wasm_smart(Addr::unchecked("contract3"), &CampaignQueryMsg::TokenIds {})
+                .query_wasm_smart(
+                    Addr::unchecked("contract3"),
+                    &CampaignQueryMsg::Nfts {
+                        lockup_term: 10,
+                        start_after: None,
+                        limit: None,
+                    },
+                )
                 .unwrap();
 
-            assert_eq!(token_ids, vec!["1", "2", "6", "3", "7"]);
+            assert_eq!(
+                nfts,
+                vec![
+                    NftInfo {
+                        key: 1,
+                        token_id: "1".to_string(),
+                        owner: Addr::unchecked(USER_1.to_string()),
+                        pending_reward: Uint128::from(0u128),
+                        lockup_term: LockupTerm {
+                            value: 10,
+                            percent: Uint128::from(30u128)
+                        },
+                        is_end_reward: true,
+                        start_time: start_time_1,
+                        time_calc: start_time_1 + 10,
+                        end_time: start_time_1 + 10
+                    },
+                    NftInfo {
+                        key: 2,
+                        token_id: "2".to_string(),
+                        owner: Addr::unchecked(USER_1.to_string()),
+                        pending_reward: Uint128::from(0u128),
+                        lockup_term: LockupTerm {
+                            value: 10,
+                            percent: Uint128::from(30u128)
+                        },
+                        is_end_reward: true,
+                        start_time: start_time_2,
+                        time_calc: start_time_2 + 10,
+                        end_time: start_time_2 + 10
+                    }
+                ]
+            );
+
+            // query token_ids
+            let nfts: Vec<NftInfo> = app
+                .wrap()
+                .query_wasm_smart(
+                    Addr::unchecked("contract3"),
+                    &CampaignQueryMsg::Nfts {
+                        lockup_term: 30,
+                        start_after: None,
+                        limit: None,
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nfts,
+                vec![
+                    NftInfo {
+                        key: 1,
+                        token_id: "6".to_string(),
+                        owner: Addr::unchecked(USER_2.to_string()),
+                        pending_reward: Uint128::from(122500u128),
+                        lockup_term: LockupTerm {
+                            value: 30,
+                            percent: Uint128::from(70u128)
+                        },
+                        is_end_reward: true,
+                        start_time: start_time_6,
+                        time_calc: start_time_6 + 30,
+                        end_time: start_time_6 + 30
+                    },
+                    NftInfo {
+                        key: 2,
+                        token_id: "3".to_string(),
+                        owner: Addr::unchecked(USER_1.to_string()),
+                        pending_reward: Uint128::from(105000u128),
+                        lockup_term: LockupTerm {
+                            value: 30,
+                            percent: Uint128::from(70u128)
+                        },
+                        is_end_reward: true,
+                        start_time: start_time_3,
+                        time_calc: start_time_3 + 30,
+                        end_time: start_time_3 + 30
+                    },
+                    NftInfo {
+                        key: 3,
+                        token_id: "7".to_string(),
+                        owner: Addr::unchecked(USER_2.to_string()),
+                        pending_reward: Uint128::from(0u128),
+                        lockup_term: LockupTerm {
+                            value: 30,
+                            percent: Uint128::from(70u128)
+                        },
+                        is_end_reward: false,
+                        start_time: start_time_7,
+                        time_calc: start_time_7,
+                        end_time: start_time_7 + 30
+                    }
+                ]
+            );
 
             // stake nft token_id 8
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "8".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["8".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
             let start_time_8 = app.block_info().time.seconds();
 
@@ -2090,7 +2781,7 @@ mod tests {
             assert!(response.is_ok());
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -2101,13 +2792,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::from(952500u128),
                     },
@@ -2122,47 +2813,16 @@ mod tests {
                             percent: Uint128::new(70u128),
                         },
                     ],
-                    total_nft_staked: 6,
                     total_reward_claimed: Uint128::from(47500u128),
                     total_reward: Uint128::from(1000000u128),
                     reward_per_second: Uint128::from(10000u128),
-                    time_calc_nft: current_block_time + 90,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
             );
 
-            assert_eq!(campaign_info.time_calc_nft, start_time_8);
-
-            // get nft info id 7
-            let nft_info: NftInfo = app
-                .wrap()
-                .query_wasm_smart(
-                    "contract3",
-                    &CampaignQueryMsg::Nft {
-                        token_id: "7".to_string(),
-                    },
-                )
-                .unwrap();
-
-            assert_eq!(
-                nft_info,
-                NftInfo {
-                    token_id: "7".to_string(),
-                    owner: Addr::unchecked(USER_2.to_string()),
-                    pending_reward: Uint128::from(0u128),
-                    lockup_term: LockupTerm {
-                        value: 30,
-                        percent: Uint128::from(70u128)
-                    },
-                    is_end_reward: false,
-                    start_time: start_time_7,
-                    end_time: start_time_7 + 30
-                }
-            );
-
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -2174,46 +2834,22 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "8".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_8,
-                            end_time: start_time_8 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "6".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(122500u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_6,
-                            end_time: start_time_6 + 30
+                        NftKey {
+                            key: 3,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "7".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_7,
-                            end_time: start_time_7 + 30
+                        NftKey {
+                            key: 3,
+                            lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(122500u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
@@ -2224,7 +2860,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "7".to_string(),
+                        nft_key: NftKey {
+                            key: 3,
+                            lockup_term: 30,
+                        },
                     },
                 )
                 .unwrap();
@@ -2232,6 +2871,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 3,
                     token_id: "7".to_string(),
                     owner: Addr::unchecked(USER_2.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -2241,6 +2881,7 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_7,
+                    time_calc: start_time_7,
                     end_time: start_time_7 + 30
                 }
             );
@@ -2251,7 +2892,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "8".to_string(),
+                        nft_key: NftKey {
+                            key: 3,
+                            lockup_term: 10,
+                        },
                     },
                 )
                 .unwrap();
@@ -2259,6 +2903,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 3,
                     token_id: "8".to_string(),
                     owner: Addr::unchecked(USER_2.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -2268,12 +2913,13 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_8,
+                    time_calc: start_time_8,
                     end_time: start_time_8 + 10
                 }
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -2285,49 +2931,38 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "8".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_8,
-                            end_time: start_time_8 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "6".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(122500u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_6,
-                            end_time: start_time_6 + 30
+                        NftKey {
+                            key: 3,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "7".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_7,
-                            end_time: start_time_7 + 30
+                        NftKey {
+                            key: 3,
+                            lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(122500u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
+
+            // reset pool
+            let reset_pool_msg = CampaignExecuteMsg::ResetPool {};
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(ADMIN.to_string()),
+                Addr::unchecked("contract3"),
+                &reset_pool_msg,
+                &[],
+            );
+
+            assert!(response.is_ok());
 
             // increase 10 second
             app.set_block(BlockInfo {
@@ -2338,10 +2973,10 @@ mod tests {
 
             // stake nft token_id 4
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "4".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["4".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
             let start_time_4 = app.block_info().time.seconds();
 
@@ -2361,9 +2996,241 @@ mod tests {
                 height: app.block_info().height + 20,
                 chain_id: app.block_info().chain_id,
             });
+            // get nft info id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 10,
+                    end_time: start_time_1 + 10
+                }
+            );
+            // get nft info id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(0u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 10,
+                    end_time: start_time_2 + 10
+                }
+            );
+
+            // get nft info id 3
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "3".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(105000u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_3,
+                    time_calc: start_time_3 + 30,
+                    end_time: start_time_3 + 30
+                }
+            );
+
+            // get nft info id 4
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 4,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 4,
+                    token_id: "4".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(35000u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_4,
+                    time_calc: start_time_4 + 10,
+                    end_time: start_time_4 + 30
+                }
+            );
+
+            // get nft info id 6
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "6".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(122500u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_6,
+                    time_calc: start_time_6 + 30,
+                    end_time: start_time_6 + 30
+                }
+            );
+
+            // get nft info id 7
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 3,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 3,
+                    token_id: "7".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(105000u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_7,
+                    time_calc: start_time_7 + 20,
+                    end_time: start_time_7 + 30
+                }
+            );
+
+            // get nft info id 8
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 3,
+                            lockup_term: 10,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 3,
+                    token_id: "8".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(30000u128),
+                    lockup_term: LockupTerm {
+                        value: 10,
+                        percent: Uint128::from(30u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_8,
+                    time_calc: start_time_8 + 10,
+                    end_time: start_time_8 + 10
+                }
+            );
+
+            // let term_reward_rates: Vec<RewardRate> = app
+            //     .wrap()
+            //     .query_wasm_smart(
+            //         "contract3",
+            //         &CampaignQueryMsg::TermRewardRates { term_value: 30 },
+            //     )
+            //     .unwrap();
+
+            // assert_eq!(term_reward_rates, vec![]);
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -2375,64 +3242,32 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "3".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(105000u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "4".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(35000u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_4,
-                            end_time: start_time_4 + 30
+                        NftKey {
+                            key: 4,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(140000u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::from(47500u128)
                 },
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -2444,53 +3279,32 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "8".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(30000u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_8,
-                            end_time: start_time_8 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "6".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(122500u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_6,
-                            end_time: start_time_6 + 30
+                        NftKey {
+                            key: 3,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "7".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(105000u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(70u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_7,
-                            end_time: start_time_7 + 30
+                        NftKey {
+                            key: 3,
+                            lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(257500u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // USER_1 un stake nft 1 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "1".to_string(),
+                unstake_info: NftKey {
+                    key: 1,
+                    lockup_term: 10,
+                },
             };
 
             // Execute un stake nft
@@ -2502,10 +3316,46 @@ mod tests {
             );
 
             assert!(response.is_ok());
+
+            // nft staked with USER_1
+            let staked: StakerRewardAssetInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftStaked {
+                        owner: Addr::unchecked(USER_1.to_string()),
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                staked,
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
+                        },
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
+                        },
+                        NftKey {
+                            key: 4,
+                            lockup_term: 30
+                        }
+                    ],
+                    reward_debt: Uint128::from(0u128),
+                    reward_claimed: Uint128::from(47500u128)
+                },
+            );
 
             // USER_1 un stake nft 2 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "2".to_string(),
+                unstake_info: NftKey {
+                    key: 2,
+                    lockup_term: 10,
+                },
             };
 
             // Execute un stake nft
@@ -2517,10 +3367,42 @@ mod tests {
             );
 
             assert!(response.is_ok());
+
+            // nft staked with USER_1
+            let staked: StakerRewardAssetInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftStaked {
+                        owner: Addr::unchecked(USER_1.to_string()),
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                staked,
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
+                        },
+                        NftKey {
+                            key: 4,
+                            lockup_term: 30
+                        }
+                    ],
+                    reward_debt: Uint128::from(0u128),
+                    reward_claimed: Uint128::from(47500u128)
+                },
+            );
 
             // USER_1 un stake nft 3 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "3".to_string(),
+                unstake_info: NftKey {
+                    key: 2,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -2532,10 +3414,78 @@ mod tests {
             );
 
             assert!(response.is_ok());
+
+            // nft staked with USER_1
+            let staked: StakerRewardAssetInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftStaked {
+                        owner: Addr::unchecked(USER_1.to_string()),
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                staked,
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 4,
+                        lockup_term: 30
+                    }],
+                    reward_debt: Uint128::from(105000u128),
+                    reward_claimed: Uint128::from(47500u128)
+                },
+            );
+
+            // let term_reward_rates: Vec<RewardRate> = app
+            //     .wrap()
+            //     .query_wasm_smart(
+            //         "contract3",
+            //         &CampaignQueryMsg::TermRewardRates { term_value: 30 },
+            //     )
+            //     .unwrap();
+
+            // assert_eq!(term_reward_rates, vec![]);
+
+            // get nft info id 4
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 4,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 4,
+                    token_id: "4".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(35000u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(70u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_4,
+                    time_calc: start_time_4 + 10,
+                    end_time: start_time_4 + 30
+                }
+            );
 
             // USER_1 un stake nft 4 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "4".to_string(),
+                unstake_info: NftKey {
+                    key: 4,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -2550,7 +3500,10 @@ mod tests {
 
             // USER_2 un stake nft 6 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "6".to_string(),
+                unstake_info: NftKey {
+                    key: 1,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -2563,9 +3516,12 @@ mod tests {
 
             assert!(response.is_ok());
 
-            // USER_2 un stake nft 6 msg
+            // USER_2 un stake nft 7 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "7".to_string(),
+                unstake_info: NftKey {
+                    key: 3,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -2578,9 +3534,12 @@ mod tests {
 
             assert!(response.is_ok());
 
-            // USER_2 un stake nft 6 msg
+            // USER_2 un stake nft 8 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "8".to_string(),
+                unstake_info: NftKey {
+                    key: 3,
+                    lockup_term: 10,
+                },
             };
 
             // Execute un stake nft
@@ -2594,7 +3553,7 @@ mod tests {
             assert!(response.is_ok());
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -2606,15 +3565,15 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![],
+                StakerRewardAssetInfo {
+                    keys: vec![],
                     reward_debt: Uint128::from(140000u128),
                     reward_claimed: Uint128::from(47500u128)
                 },
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -2626,12 +3585,22 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![],
+                StakerRewardAssetInfo {
+                    keys: vec![],
                     reward_debt: Uint128::from(257500u128),
                     reward_claimed: Uint128::zero()
                 },
             );
+
+            // let term_reward_rates: Vec<RewardRate> = app
+            //     .wrap()
+            //     .query_wasm_smart(
+            //         "contract3",
+            //         &CampaignQueryMsg::TermRewardRates { term_value: 10 },
+            //     )
+            //     .unwrap();
+
+            // assert_eq!(term_reward_rates, vec![]);
 
             // get staker total pending reward
             let total_pending_reward: Uint128 = app
@@ -2683,7 +3652,7 @@ mod tests {
             assert_eq!(balance.balance, Uint128::from(397500u128));
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -2694,13 +3663,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info,
                         amount: Uint128::from(397500u128),
                     },
@@ -2715,11 +3684,9 @@ mod tests {
                             percent: Uint128::new(70u128),
                         },
                     ],
-                    total_nft_staked: 0,
                     total_reward_claimed: Uint128::from(47500u128),
                     total_reward: Uint128::from(1000000u128),
                     reward_per_second: Uint128::from(10000u128),
-                    time_calc_nft: current_block_time + 110,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
@@ -3014,7 +3981,7 @@ mod tests {
             );
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -3025,13 +3992,13 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
                     },
@@ -3040,11 +4007,10 @@ mod tests {
                         value: 30,
                         percent: Uint128::new(100u128),
                     },],
-                    total_nft_staked: 0,
+
                     total_reward_claimed: Uint128::zero(),
                     total_reward: Uint128::zero(),
                     reward_per_second: Uint128::zero(),
-                    time_calc_nft: 0,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
@@ -3108,14 +4074,14 @@ mod tests {
             assert!(response.is_ok());
 
             // check reward token in campaign
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart("contract3", &CampaignQueryMsg::CampaignInfo {})
                 .unwrap();
 
             assert_eq!(
                 Uint128::from(MOCK_1000_TOKEN_AMOUNT),
-                campaign_info.reward_token_info.amount
+                campaign_info.reward_token.amount
             );
 
             // query balance of ADMIN in cw20 base token contract
@@ -3155,10 +4121,10 @@ mod tests {
 
             // stake nft token_id 1
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "1".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["1".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
             let start_time_1 = app.block_info().time.seconds();
 
@@ -3181,10 +4147,10 @@ mod tests {
 
             // stake nft token_id 2
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "2".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["2".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
             let start_time_2 = app.block_info().time.seconds();
 
@@ -3204,7 +4170,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "1".to_string(),
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 30,
+                        },
                     },
                 )
                 .unwrap();
@@ -3212,6 +4181,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 1,
                     token_id: "1".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(100000u128),
@@ -3221,6 +4191,7 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_1,
+                    time_calc: start_time_1 + 10,
                     end_time: start_time_1 + 30
                 }
             );
@@ -3231,7 +4202,10 @@ mod tests {
                 .query_wasm_smart(
                     "contract3",
                     &CampaignQueryMsg::NftInfo {
-                        token_id: "2".to_string(),
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
                     },
                 )
                 .unwrap();
@@ -3239,6 +4213,7 @@ mod tests {
             assert_eq!(
                 nft_info,
                 NftInfo {
+                    key: 2,
                     token_id: "2".to_string(),
                     owner: Addr::unchecked(USER_1.to_string()),
                     pending_reward: Uint128::from(0u128),
@@ -3248,12 +4223,13 @@ mod tests {
                     },
                     is_end_reward: false,
                     start_time: start_time_2,
+                    time_calc: start_time_2,
                     end_time: start_time_2 + 30
                 }
             );
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3265,44 +4241,28 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(100000u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(100000u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // stake nft token_id 6
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "6".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["6".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
             let start_time_6 = app.block_info().time.seconds();
 
@@ -3317,7 +4277,7 @@ mod tests {
             assert!(response.is_ok());
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3329,19 +4289,11 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "6".to_string(),
-                        owner: Addr::unchecked(USER_2.to_string()),
-                        pending_reward: Uint128::from(0u128),
-                        lockup_term: LockupTerm {
-                            value: 30,
-                            percent: Uint128::from(100u128)
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_6,
-                        end_time: start_time_6 + 30
-                    },],
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 3,
+                        lockup_term: 30
+                    }],
                     reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
@@ -3354,8 +4306,104 @@ mod tests {
                 chain_id: app.block_info().chain_id,
             });
 
+            // get nft info
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(166666u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(100u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 30,
+                    end_time: start_time_1 + 30
+                }
+            );
+
+            // get nft info id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(66666u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(100u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 20,
+                    end_time: start_time_2 + 30
+                }
+            );
+
+            // get nft info id 6
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 3,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 3,
+                    token_id: "6".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(66666u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(100u128)
+                    },
+                    is_end_reward: false,
+                    start_time: start_time_6,
+                    time_calc: start_time_6 + 20,
+                    end_time: start_time_6 + 30
+                }
+            );
+
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3367,40 +4415,24 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(166666u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(66666u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(233332u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3412,20 +4444,12 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "6".to_string(),
-                        owner: Addr::unchecked(USER_2.to_string()),
-                        pending_reward: Uint128::from(66666u128),
-                        lockup_term: LockupTerm {
-                            value: 30,
-                            percent: Uint128::from(100u128)
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_6,
-                        end_time: start_time_6 + 30
-                    },],
-                    reward_debt: Uint128::from(66666u128),
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 3,
+                        lockup_term: 30
+                    }],
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
@@ -3438,7 +4462,7 @@ mod tests {
             });
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3450,40 +4474,24 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(166666u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(116666u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(283332u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3495,22 +4503,110 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "6".to_string(),
-                        owner: Addr::unchecked(USER_2.to_string()),
-                        pending_reward: Uint128::from(116666u128),
-                        lockup_term: LockupTerm {
-                            value: 30,
-                            percent: Uint128::from(100u128)
-                        },
-                        is_end_reward: true,
-                        start_time: start_time_6,
-                        end_time: start_time_6 + 30
-                    },],
-                    reward_debt: Uint128::from(116666u128),
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 3,
+                        lockup_term: 30
+                    }],
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
+            );
+
+            // get nft info id 1
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 1,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 1,
+                    token_id: "1".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(166666u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(100u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_1,
+                    time_calc: start_time_1 + 30,
+                    end_time: start_time_1 + 30
+                }
+            );
+
+            // get nft info id 2
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 2,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 2,
+                    token_id: "2".to_string(),
+                    owner: Addr::unchecked(USER_1.to_string()),
+                    pending_reward: Uint128::from(116666u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(100u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_2,
+                    time_calc: start_time_2 + 30,
+                    end_time: start_time_2 + 30
+                }
+            );
+
+            // get nft info id 6
+            let nft_info: NftInfo = app
+                .wrap()
+                .query_wasm_smart(
+                    "contract3",
+                    &CampaignQueryMsg::NftInfo {
+                        nft_key: NftKey {
+                            key: 3,
+                            lockup_term: 30,
+                        },
+                    },
+                )
+                .unwrap();
+
+            assert_eq!(
+                nft_info,
+                NftInfo {
+                    key: 3,
+                    token_id: "6".to_string(),
+                    owner: Addr::unchecked(USER_2.to_string()),
+                    pending_reward: Uint128::from(116666u128),
+                    lockup_term: LockupTerm {
+                        value: 30,
+                        percent: Uint128::from(100u128)
+                    },
+                    is_end_reward: true,
+                    start_time: start_time_6,
+                    time_calc: start_time_6 + 30,
+                    end_time: start_time_6 + 30
+                }
             );
 
             // USER_1 claim reward msg
@@ -3529,7 +4625,7 @@ mod tests {
             assert!(response.is_ok());
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3541,31 +4637,15 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_2,
-                            end_time: start_time_2 + 30
+                        NftKey {
+                            key: 2,
+                            lockup_term: 30
                         }
                     ],
                     reward_debt: Uint128::from(0u128),
@@ -3582,12 +4662,12 @@ mod tests {
 
             // stake nft token_id 7
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "7".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["7".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
-            let start_time_7 = app.block_info().time.seconds();
+            let _start_time_7 = app.block_info().time.seconds();
 
             // Execute stake nft to campaign
             let response = app.execute_contract(
@@ -3608,12 +4688,12 @@ mod tests {
 
             // stake nft token_id 11
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "11".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["11".to_string()],
                     lockup_term: 30,
-                }],
+                },
             };
-            let start_time_11 = app.block_info().time.seconds();
+            let _start_time_11 = app.block_info().time.seconds();
 
             // Execute stake nft to campaign
             let response = app.execute_contract(
@@ -3626,7 +4706,7 @@ mod tests {
             assert!(response.is_ok());
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3638,34 +4718,18 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "6".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(116666u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_6,
-                            end_time: start_time_6 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 3,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "7".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(100000u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_7,
-                            end_time: start_time_7 + 30
+                        NftKey {
+                            key: 4,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(216666u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
@@ -3678,7 +4742,7 @@ mod tests {
             });
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3690,40 +4754,24 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "6".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(116666u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_6,
-                            end_time: start_time_6 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 3,
+                            lockup_term: 30
                         },
-                        NftInfo {
-                            token_id: "7".to_string(),
-                            owner: Addr::unchecked(USER_2.to_string()),
-                            pending_reward: Uint128::from(150000u128),
-                            lockup_term: LockupTerm {
-                                value: 30,
-                                percent: Uint128::from(100u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_7,
-                            end_time: start_time_7 + 30
+                        NftKey {
+                            key: 4,
+                            lockup_term: 30
                         }
                     ],
-                    reward_debt: Uint128::from(266666u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // nft staked with USER_3
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3735,27 +4783,22 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![NftInfo {
-                        token_id: "11".to_string(),
-                        owner: Addr::unchecked(USER_3.to_string()),
-                        pending_reward: Uint128::from(50000u128),
-                        lockup_term: LockupTerm {
-                            value: 30,
-                            percent: Uint128::from(100u128)
-                        },
-                        is_end_reward: true,
-                        start_time: start_time_11,
-                        end_time: start_time_11 + 30
+                StakerRewardAssetInfo {
+                    keys: vec![NftKey {
+                        key: 5,
+                        lockup_term: 30
                     }],
-                    reward_debt: Uint128::from(50000u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // USER_1 un stake nft 1 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "1".to_string(),
+                unstake_info: NftKey {
+                    key: 1,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -3770,7 +4813,10 @@ mod tests {
 
             // USER_1 un stake nft 2 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "2".to_string(),
+                unstake_info: NftKey {
+                    key: 2,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -3785,7 +4831,10 @@ mod tests {
 
             // USER_2 un stake nft 6 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "6".to_string(),
+                unstake_info: NftKey {
+                    key: 3,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -3800,7 +4849,10 @@ mod tests {
 
             // USER_2 un stake nft 7 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "7".to_string(),
+                unstake_info: NftKey {
+                    key: 4,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -3815,7 +4867,10 @@ mod tests {
 
             // USER_3 un stake nft 11 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "11".to_string(),
+                unstake_info: NftKey {
+                    key: 5,
+                    lockup_term: 30,
+                },
             };
 
             // Execute un stake nft
@@ -3829,7 +4884,7 @@ mod tests {
             assert!(response.is_ok());
 
             // nft staked with USER_1
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3841,15 +4896,15 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![],
+                StakerRewardAssetInfo {
+                    keys: vec![],
                     reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::from(283332u128),
                 },
             );
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3861,15 +4916,15 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![],
+                StakerRewardAssetInfo {
+                    keys: vec![],
                     reward_debt: Uint128::from(266666u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // nft staked with USER_3
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -3881,8 +4936,8 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![],
+                StakerRewardAssetInfo {
+                    keys: vec![],
                     reward_debt: Uint128::from(50000u128),
                     reward_claimed: Uint128::zero()
                 },
@@ -3895,9 +4950,9 @@ mod tests {
                 .unwrap();
 
             // USER_2 = 266666, USER_3 = 50000
-            assert_eq!(total_pending_reward, Uint128::from(316666u128));
+            assert_eq!(total_pending_reward, Uint128::from(316668u128));
 
-            // withdraw remaining reward msg = 1000000 - 283332 - 316666 = 400002
+            // withdraw remaining reward msg = 1000000 - 283332 - 316668 = 400000
             let withdraw_reward_msg = CampaignExecuteMsg::WithdrawReward {};
 
             // Execute withdraw remaining reward
@@ -3911,7 +4966,7 @@ mod tests {
             assert!(response.is_ok());
 
             // query campaign contract address
-            let campaign_info: CampaignInfoResult = app
+            let campaign_info: CampaignInfo = app
                 .wrap()
                 .query_wasm_smart(
                     Addr::unchecked("contract3"),
@@ -3922,26 +4977,24 @@ mod tests {
             // assert campaign info
             assert_eq!(
                 campaign_info,
-                CampaignInfoResult {
+                CampaignInfo {
                     owner: Addr::unchecked(ADMIN.to_string()),
                     campaign_name: "campaign name".to_string(),
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
-                    reward_token_info: AssetToken {
+                    reward_token: AssetToken {
                         info: token_info,
-                        amount: Uint128::from(316666u128),
+                        amount: Uint128::from(316668u128),
                     },
                     allowed_collection: Addr::unchecked(collection_contract.clone()),
                     lockup_term: vec![LockupTerm {
                         value: 30,
                         percent: Uint128::new(100u128),
                     },],
-                    total_nft_staked: 0,
                     total_reward_claimed: Uint128::from(283332u128),
                     total_reward: Uint128::from(1000000u128),
                     reward_per_second: Uint128::from(10000u128),
-                    time_calc_nft: current_block_time + 110,
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                 }
@@ -3959,7 +5012,7 @@ mod tests {
                 .unwrap();
 
             // It should be 555000 token as withdraw happened
-            assert_eq!(balance.balance, Uint128::from(400002u128));
+            assert_eq!(balance.balance, Uint128::from(400000u128));
 
             // query balance of campaign contract in cw20 base token contract
             let balance: BalanceResponse = app
@@ -3972,7 +5025,7 @@ mod tests {
                 )
                 .unwrap();
 
-            assert_eq!(balance.balance, Uint128::from(316666u128));
+            assert_eq!(balance.balance, Uint128::from(316668u128));
         }
 
         //         -------------- wrong operation ------------------
@@ -4182,7 +5235,6 @@ mod tests {
 
             // update config
             let create_campaign_msg = crate::msg::ExecuteMsg::UpdateConfig {
-                owner: None,
                 campaign_code_id: None,
                 allow_create_for_all: Some(true),
             };
@@ -4598,10 +5650,10 @@ mod tests {
 
             // stake nft token_id 1
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "1".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["1".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
             let _start_time_1 = app.block_info().time.seconds();
 
@@ -4633,28 +5685,16 @@ mod tests {
 
             // stake nft
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![
-                    NftStake {
-                        token_id: "1".to_string(),
-                        lockup_term: 10,
-                    },
-                    NftStake {
-                        token_id: "2".to_string(),
-                        lockup_term: 10,
-                    },
-                    NftStake {
-                        token_id: "3".to_string(),
-                        lockup_term: 10,
-                    },
-                    NftStake {
-                        token_id: "4".to_string(),
-                        lockup_term: 10,
-                    },
-                    NftStake {
-                        token_id: "5".to_string(),
-                        lockup_term: 10,
-                    },
-                ],
+                stake_info: NftStake {
+                    token_ids: vec![
+                        "1".to_string(),
+                        "2".to_string(),
+                        "3".to_string(),
+                        "4".to_string(),
+                        "5".to_string(),
+                    ],
+                    lockup_term: 10,
+                },
             };
 
             // Execute stake nft to campaign
@@ -4686,10 +5726,10 @@ mod tests {
 
             // stake nft token_id 1
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "1".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["1".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
             let _start_time_1 = app.block_info().time.seconds();
 
@@ -4706,16 +5746,10 @@ mod tests {
 
             // stake nft
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![
-                    NftStake {
-                        token_id: "1".to_string(),
-                        lockup_term: 10,
-                    },
-                    NftStake {
-                        token_id: "2".to_string(),
-                        lockup_term: 20,
-                    },
-                ],
+                stake_info: NftStake {
+                    token_ids: vec!["2".to_string()],
+                    lockup_term: 20,
+                },
             };
 
             // Execute stake nft to campaign
@@ -4731,18 +5765,12 @@ mod tests {
 
             // stake nft token_id 1
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![
-                    NftStake {
-                        token_id: "1".to_string(),
-                        lockup_term: 10,
-                    },
-                    NftStake {
-                        token_id: "2".to_string(),
-                        lockup_term: 10,
-                    },
-                ],
+                stake_info: NftStake {
+                    token_ids: vec!["1".to_string(), "2".to_string()],
+                    lockup_term: 10,
+                },
             };
-            let start_time_1 = app.block_info().time.seconds();
+            let _start_time_1 = app.block_info().time.seconds();
 
             // Execute stake nft to campaign
             let response = app.execute_contract(
@@ -4761,24 +5789,28 @@ mod tests {
                 chain_id: app.block_info().chain_id,
             });
 
+            // reset pool
+            let reset_pool_msg = CampaignExecuteMsg::ResetPool {};
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(USER_1.to_string()),
+                Addr::unchecked("contract3"),
+                &reset_pool_msg,
+                &[],
+            );
+
+            // err with USER_1 is not owner
+            assert!(response.is_err());
+
             // stake nft token_id 3,4
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![
-                    NftStake {
-                        token_id: "3".to_string(),
-                        lockup_term: 10,
-                    },
-                    NftStake {
-                        token_id: "4".to_string(),
-                        lockup_term: 10,
-                    },
-                    // NftStake {
-                    //     token_id: "4".to_string(),
-                    //     lockup_term: 10,
-                    // },
-                ],
+                stake_info: NftStake {
+                    token_ids: vec!["3".to_string(), "4".to_string()],
+                    lockup_term: 10,
+                },
             };
-            let start_time_3 = app.block_info().time.seconds();
+            let _start_time_3 = app.block_info().time.seconds();
 
             // Execute stake nft to campaign
             let response = app.execute_contract(
@@ -4790,8 +5822,8 @@ mod tests {
 
             assert!(response.is_ok());
 
-            // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            // nft staked with USER_1
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -4803,65 +5835,33 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(7500u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(7500u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "3".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 10
+                        NftKey {
+                            key: 3,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "4".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(0u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 10
+                        NftKey {
+                            key: 4,
+                            lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(15000u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // USER_1 claim reward msg
             let claim_reward_msg = CampaignExecuteMsg::ClaimReward {
-                amount: Uint128::from(20000u128),
+                amount: Uint128::from(200000u128),
             };
 
             // Execute claim reward
@@ -4872,7 +5872,7 @@ mod tests {
                 &[],
             );
 
-            // err with current reward = 15_000 but claim 20_000
+            // err with current reward = 30_000 but claim 200_000
             assert!(response.is_err());
 
             // increase 5 second
@@ -4883,7 +5883,7 @@ mod tests {
             });
 
             // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -4895,65 +5895,36 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "1".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(11250u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 1,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(11250u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "3".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(3750u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 10
+                        NftKey {
+                            key: 3,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "4".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(3750u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 10
+                        NftKey {
+                            key: 4,
+                            lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(30000u128),
+                    reward_debt: Uint128::from(0u128),
                     reward_claimed: Uint128::zero()
                 },
             );
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "3".to_string(),
+                unstake_info: NftKey {
+                    key: 3,
+                    lockup_term: 10,
+                },
             };
 
             // Execute un stake nft
@@ -4969,7 +5940,10 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "1".to_string(),
+                unstake_info: NftKey {
+                    key: 1,
+                    lockup_term: 10,
+                },
             };
 
             // Execute un stake nft
@@ -4982,8 +5956,8 @@ mod tests {
 
             assert!(response.is_ok());
 
-            // nft staked with USER_2
-            let staked: StakedInfoResult = app
+            // nft staked with USER_1
+            let staked: StakerRewardAssetInfo = app
                 .wrap()
                 .query_wasm_smart(
                     "contract3",
@@ -4995,100 +5969,32 @@ mod tests {
 
             assert_eq!(
                 staked,
-                StakedInfoResult {
-                    nfts: vec![
-                        NftInfo {
-                            token_id: "2".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(11250u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: true,
-                            start_time: start_time_1,
-                            end_time: start_time_1 + 10
+                StakerRewardAssetInfo {
+                    keys: vec![
+                        NftKey {
+                            key: 2,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "3".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(3750u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 10
+                        NftKey {
+                            key: 3,
+                            lockup_term: 10
                         },
-                        NftInfo {
-                            token_id: "4".to_string(),
-                            owner: Addr::unchecked(USER_1.to_string()),
-                            pending_reward: Uint128::from(3750u128),
-                            lockup_term: LockupTerm {
-                                value: 10,
-                                percent: Uint128::from(30u128)
-                            },
-                            is_end_reward: false,
-                            start_time: start_time_3,
-                            end_time: start_time_3 + 10
+                        NftKey {
+                            key: 4,
+                            lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(30000u128),
+                    reward_debt: Uint128::from(22500u128), // reward in nft 1 transferred
                     reward_claimed: Uint128::zero()
                 },
             );
 
-            let nfts: Vec<NftInfo> = app
-                .wrap()
-                .query_wasm_smart("contract3", &CampaignQueryMsg::Nfts { limit: None })
-                .unwrap();
-
-            assert_eq!(
-                nfts,
-                vec![
-                    NftInfo {
-                        token_id: "2".to_string(),
-                        owner: Addr::unchecked(USER_1.to_string()),
-                        pending_reward: Uint128::from(11250u128),
-                        lockup_term: LockupTerm {
-                            value: 10,
-                            percent: Uint128::from(30u128)
-                        },
-                        is_end_reward: true,
-                        start_time: start_time_1,
-                        end_time: start_time_1 + 10
-                    },
-                    NftInfo {
-                        token_id: "3".to_string(),
-                        owner: Addr::unchecked(USER_1.to_string()),
-                        pending_reward: Uint128::from(3750u128),
-                        lockup_term: LockupTerm {
-                            value: 10,
-                            percent: Uint128::from(30u128)
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_3,
-                        end_time: start_time_3 + 10
-                    },
-                    NftInfo {
-                        token_id: "4".to_string(),
-                        owner: Addr::unchecked(USER_1.to_string()),
-                        pending_reward: Uint128::from(3750u128),
-                        lockup_term: LockupTerm {
-                            value: 10,
-                            percent: Uint128::from(30u128)
-                        },
-                        is_end_reward: false,
-                        start_time: start_time_3,
-                        end_time: start_time_3 + 10
-                    }
-                ]
-            );
-
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                token_id: "1".to_string(),
+                unstake_info: NftKey {
+                    key: 1,
+                    lockup_term: 10,
+                },
             };
 
             // Execute un stake nft
@@ -5626,10 +6532,10 @@ mod tests {
 
             // stake nft token_id 1
             let stake_nft_msg = CampaignExecuteMsg::StakeNfts {
-                nfts: vec![NftStake {
-                    token_id: "1".to_string(),
+                stake_info: NftStake {
+                    token_ids: vec!["1".to_string()],
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute stake nft to campaign

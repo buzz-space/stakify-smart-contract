@@ -1,6 +1,5 @@
 use crate::state::{ConfigResponse, CreateCampaign, FactoryCampaign};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Addr;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -13,7 +12,6 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     /// UpdateConfig update relevant code IDs
     UpdateConfig {
-        owner: Option<Addr>,
         campaign_code_id: Option<u64>,
         allow_create_for_all: Option<bool>,
     },
