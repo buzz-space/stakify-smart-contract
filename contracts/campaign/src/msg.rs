@@ -26,14 +26,23 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    AddRewardToken { amount: Uint128 },
+    AddRewardToken {
+        amount: Uint128,
+    },
     // user can stake 1 or many nfts to this campaign
-    StakeNfts { stake_info: NftStake },
+    StakeNfts {
+        stake_info: NftStake,
+    },
 
-    UnStakeNft { unstake_info: NftKey },
+    UnStakeNft {
+        unstake_info: NftKey,
+        token_id: String,
+    },
 
     // user can claim reward
-    ClaimReward { amount: Uint128 },
+    ClaimReward {
+        amount: Uint128,
+    },
 
     WithdrawReward {},
 

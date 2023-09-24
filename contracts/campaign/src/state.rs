@@ -91,6 +91,13 @@ pub struct NftKey {
 }
 
 #[cw_serde]
+pub struct NftUnStake {
+    pub key: u64,
+    pub token_id: String,
+    pub lockup_term: u64,
+}
+
+#[cw_serde]
 pub struct RewardRate {
     pub timestamp: u64,
     pub rate: u64,

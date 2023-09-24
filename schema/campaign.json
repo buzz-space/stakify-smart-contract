@@ -206,9 +206,13 @@
           "un_stake_nft": {
             "type": "object",
             "required": [
+              "token_id",
               "unstake_info"
             ],
             "properties": {
+              "token_id": {
+                "type": "string"
+              },
               "unstake_info": {
                 "$ref": "#/definitions/NftKey"
               }
