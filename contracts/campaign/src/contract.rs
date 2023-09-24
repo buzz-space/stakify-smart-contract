@@ -156,9 +156,10 @@ pub fn execute(
     match msg {
         ExecuteMsg::AddRewardToken { amount } => execute_add_reward_token(deps, env, info, amount),
         ExecuteMsg::StakeNfts { stake_info } => execute_stake_nft(deps, env, info, stake_info),
-        ExecuteMsg::UnStakeNft { unstake_info } => {
-            execute_unstake_nft(deps, env, info, unstake_info)
-        }
+        ExecuteMsg::UnStakeNft {
+            unstake_info,
+            token_id,
+        } => execute_unstake_nft(deps, env, info, unstake_info, token_id),
         ExecuteMsg::ClaimReward { amount } => execute_claim_reward(deps, env, info, amount),
         ExecuteMsg::WithdrawReward {} => execute_withdraw_reward(deps, env, info),
         ExecuteMsg::ResetPool {} => execute_reset_pool(deps, env, info),
@@ -411,6 +412,7 @@ pub fn execute_unstake_nft(
     env: Env,
     info: MessageInfo,
     unstake_info: NftKey,
+    _token_id: String,
 ) -> Result<Response, ContractError> {
     // load campaign info
     let campaign_info: CampaignInfo = CAMPAIGN_INFO.load(deps.storage)?;
@@ -917,7 +919,14 @@ fn query_staker_info(
     _env: Env,
     owner: Addr,
 ) -> Result<StakerRewardAssetInfo, ContractError> {
-    let staker_asset: StakerRewardAssetInfo = STAKERS_INFO.may_load(deps.storage, owner)?.unwrap();
+    let staker_asset: StakerRewardAssetInfo =
+        STAKERS_INFO
+            .load(deps.storage, owner)
+            .unwrap_or(StakerRewardAssetInfo {
+                keys: vec![],
+                reward_debt: Uint128::zero(),
+                reward_claimed: Uint128::zero(),
+            });
 
     Ok(staker_asset)
 }

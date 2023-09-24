@@ -1039,6 +1039,7 @@ mod tests {
                     key: 1,
                     lockup_term: 10,
                 },
+                token_id: "1".to_string(),
             };
 
             // Execute un stake nft
@@ -3305,6 +3306,7 @@ mod tests {
                     key: 1,
                     lockup_term: 10,
                 },
+                token_id: "1".to_string(),
             };
 
             // Execute un stake nft
@@ -3356,6 +3358,7 @@ mod tests {
                     key: 2,
                     lockup_term: 10,
                 },
+                token_id: "2".to_string(),
             };
 
             // Execute un stake nft
@@ -3403,6 +3406,7 @@ mod tests {
                     key: 2,
                     lockup_term: 30,
                 },
+                token_id: "3".to_string(),
             };
 
             // Execute un stake nft
@@ -3486,6 +3490,7 @@ mod tests {
                     key: 4,
                     lockup_term: 30,
                 },
+                token_id: "4".to_string(),
             };
 
             // Execute un stake nft
@@ -3504,6 +3509,7 @@ mod tests {
                     key: 1,
                     lockup_term: 30,
                 },
+                token_id: "6".to_string(),
             };
 
             // Execute un stake nft
@@ -3522,6 +3528,7 @@ mod tests {
                     key: 3,
                     lockup_term: 30,
                 },
+                token_id: "7".to_string(),
             };
 
             // Execute un stake nft
@@ -3540,6 +3547,7 @@ mod tests {
                     key: 3,
                     lockup_term: 10,
                 },
+                token_id: "8".to_string(),
             };
 
             // Execute un stake nft
@@ -4799,6 +4807,7 @@ mod tests {
                     key: 1,
                     lockup_term: 30,
                 },
+                token_id: "1".to_string(),
             };
 
             // Execute un stake nft
@@ -4817,6 +4826,7 @@ mod tests {
                     key: 2,
                     lockup_term: 30,
                 },
+                token_id: "2".to_string(),
             };
 
             // Execute un stake nft
@@ -4835,6 +4845,7 @@ mod tests {
                     key: 3,
                     lockup_term: 30,
                 },
+                token_id: "6".to_string(),
             };
 
             // Execute un stake nft
@@ -4853,6 +4864,7 @@ mod tests {
                     key: 4,
                     lockup_term: 30,
                 },
+                token_id: "7".to_string(),
             };
 
             // Execute un stake nft
@@ -4871,6 +4883,7 @@ mod tests {
                     key: 5,
                     lockup_term: 30,
                 },
+                token_id: "11".to_string(),
             };
 
             // Execute un stake nft
@@ -5925,6 +5938,7 @@ mod tests {
                     key: 3,
                     lockup_term: 10,
                 },
+                token_id: "3".to_string(),
             };
 
             // Execute un stake nft
@@ -5944,6 +5958,7 @@ mod tests {
                     key: 1,
                     lockup_term: 10,
                 },
+                token_id: "1".to_string(),
             };
 
             // Execute un stake nft
@@ -5995,6 +6010,7 @@ mod tests {
                     key: 1,
                     lockup_term: 10,
                 },
+                token_id: "1".to_string(),
             };
 
             // Execute un stake nft
