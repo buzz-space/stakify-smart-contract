@@ -919,7 +919,7 @@ fn query_staker_info(
     _env: Env,
     owner: Addr,
 ) -> Result<StakerRewardAssetInfo, ContractError> {
-    let staker_asset: StakerRewardAssetInfo = STAKERS_INFO.may_load(deps.storage, owner)?.unwrap();
+    let staker_asset: StakerRewardAssetInfo = STAKERS_INFO.load(deps.storage, owner)?;
 
     Ok(staker_asset)
 }
