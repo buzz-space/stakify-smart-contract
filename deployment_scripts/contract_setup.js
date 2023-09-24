@@ -175,9 +175,9 @@ async function main(contract_name) {
         allow_create_for_all: false,
     };
 
-    // // instantiate contract
-    // console.log("2. Instantiating contract...");
-    // let instantiateResponse = await instantiate(storeCodeResponse.codeId, instantiateMsg);
+    // instantiate contract
+    console.log("2. Instantiating contract...");
+    let instantiateResponse = await instantiate(storeCodeResponse.codeId, instantiateMsg);
 
     console.log("Contract setup completed!");
 }
