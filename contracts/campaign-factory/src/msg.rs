@@ -3,6 +3,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    pub owner: String,
     /// Campaign code ID
     pub campaign_code_id: u64,
     pub allow_create_for_all: bool,
@@ -12,6 +13,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     /// UpdateConfig update relevant code IDs
     UpdateConfig {
+        owner: Option<String>,
         campaign_code_id: Option<u64>,
         allow_create_for_all: Option<bool>,
     },

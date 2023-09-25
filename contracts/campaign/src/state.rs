@@ -6,7 +6,7 @@ use cw_storage_plus::{Item, Map}; // analog of Singletons for storage
 
 #[cw_serde]
 pub struct Config {
-    pub owner: Addr,
+    pub admin: Addr,
 }
 
 #[cw_serde]

@@ -4,7 +4,8 @@
   "type": "object",
   "required": [
     "allow_create_for_all",
-    "campaign_code_id"
+    "campaign_code_id",
+    "owner"
   ],
   "properties": {
     "allow_create_for_all": {
@@ -15,6 +16,9 @@
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
+    },
+    "owner": {
+      "type": "string"
     }
   },
   "additionalProperties": false

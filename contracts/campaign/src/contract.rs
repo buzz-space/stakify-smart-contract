@@ -85,7 +85,7 @@ pub fn instantiate(
     }
 
     let config = Config {
-        owner: deps.api.addr_validate(&msg.admin).unwrap(),
+        admin: deps.api.addr_validate(&msg.admin).unwrap(),
     };
 
     // save config can reset pool
@@ -163,6 +163,7 @@ pub fn execute(
         ExecuteMsg::ClaimReward { amount } => execute_claim_reward(deps, env, info, amount),
         ExecuteMsg::WithdrawReward {} => execute_withdraw_reward(deps, env, info),
         ExecuteMsg::ResetPool {} => execute_reset_pool(deps, env, info),
+        ExecuteMsg::UpdateAdmin { admin } => execute_update_admin(deps, env, info, admin),
     }
 }
 
@@ -734,7 +735,7 @@ pub fn execute_reset_pool(
     let campaign_info: CampaignInfo = CAMPAIGN_INFO.load(deps.storage)?;
 
     // permission check
-    if info.sender != config.owner {
+    if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
 
@@ -812,8 +813,31 @@ pub fn execute_reset_pool(
 
     Ok(
         Response::new()
-            .add_attributes([("action", "reset_pool"), ("admin", config.owner.as_ref())]),
+            .add_attributes([("action", "reset_pool"), ("admin", config.admin.as_ref())]),
     )
+}
+
+pub fn execute_update_admin(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    admin: String,
+) -> Result<Response, ContractError> {
+    let config: Config = CONFIG.load(deps.storage)?;
+
+    // permission check
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let new_config = Config {
+        admin: deps.api.addr_validate(&admin).unwrap(),
+    };
+
+    // save config admin
+    CONFIG.save(deps.storage, &new_config)?;
+
+    Ok(Response::new().add_attributes([("action", "update_admin"), ("admin", &admin)]))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
