@@ -5963,6 +5963,26 @@ mod tests {
 
             // Execute un stake nft
             let response = app.execute_contract(
+                Addr::unchecked(USER_2.to_string()),
+                Addr::unchecked("contract3"),
+                &un_stake_nft_msg,
+                &[],
+            );
+
+            // err with user 2 is not owner nft 1
+            assert!(response.is_err());
+
+            // USER_1 un stake nft msg
+            let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
+                unstake_info: NftKey {
+                    key: 1,
+                    lockup_term: 10,
+                },
+                token_id: "1".to_string(),
+            };
+
+            // Execute un stake nft
+            let response = app.execute_contract(
                 Addr::unchecked(USER_1.to_string()),
                 Addr::unchecked("contract3"),
                 &un_stake_nft_msg,
