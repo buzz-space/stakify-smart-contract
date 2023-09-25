@@ -25,6 +25,12 @@
               ],
               "format": "uint64",
               "minimum": 0.0
+            },
+            "owner": {
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "additionalProperties": false

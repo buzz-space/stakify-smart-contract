@@ -47,6 +47,10 @@ pub enum ExecuteMsg {
     WithdrawReward {},
 
     ResetPool {},
+
+    UpdateAdmin {
+        admin: String,
+    },
 }
 
 #[cw_serde]

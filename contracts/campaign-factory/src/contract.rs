@@ -28,13 +28,13 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let config = Config {
-        owner: info.sender,
+        owner: deps.api.addr_validate(&msg.owner).unwrap(),
         campaign_code_id: msg.campaign_code_id,
         allow_create_for_all: msg.allow_create_for_all,
     };
@@ -47,7 +47,15 @@ pub fn instantiate(
 
     CONFIG.save(deps.storage, &config)?;
 
-    Ok(Response::new())
+    Ok(Response::new().add_attributes([
+        ("action", "instantiate"),
+        ("owner", &msg.owner),
+        ("campaign_code_id", &msg.campaign_code_id.to_string()),
+        (
+            "allow_create_for_all",
+            &msg.allow_create_for_all.to_string(),
+        ),
+    ]))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -59,9 +67,17 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::UpdateConfig {
+            owner,
             campaign_code_id,
             allow_create_for_all,
-        } => execute_update_config(deps, env, info, campaign_code_id, allow_create_for_all),
+        } => execute_update_config(
+            deps,
+            env,
+            info,
+            owner,
+            campaign_code_id,
+            allow_create_for_all,
+        ),
         ExecuteMsg::CreateCampaign { create_campaign } => {
             execute_create_campaign(deps, env, info, create_campaign)
         }
@@ -73,6 +89,7 @@ pub fn execute_update_config(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
+    owner: Option<String>,
     campaign_code_id: Option<u64>,
     allow_create_for_all: Option<bool>,
 ) -> Result<Response, ContractError> {
@@ -82,6 +99,12 @@ pub fn execute_update_config(
     if info.sender != config.owner {
         return Err(ContractError::Unauthorized {});
     }
+
+    config.owner = if let Some(new_owner) = owner {
+        deps.api.addr_validate(&new_owner).unwrap()
+    } else {
+        config.owner
+    };
 
     config.campaign_code_id = if let Some(new_campaign_code_id) = campaign_code_id {
         new_campaign_code_id

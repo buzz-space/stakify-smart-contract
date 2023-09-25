@@ -98,6 +98,7 @@ mod tests {
 
             // Update config
             let update_config = crate::msg::ExecuteMsg::UpdateConfig {
+                owner: None,
                 campaign_code_id: None,
                 allow_create_for_all: None,
             };
@@ -2407,6 +2408,52 @@ mod tests {
             //     .unwrap();
 
             // assert_eq!(term_reward_rates, vec![]);
+
+            // update admin
+            let update_admin_msg = CampaignExecuteMsg::UpdateAdmin {
+                admin: USER_2.to_string(),
+            };
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(USER_1.to_string()),
+                Addr::unchecked("contract3"),
+                &update_admin_msg,
+                &[],
+            );
+
+            // err with USER_1 is not admin
+            assert!(response.is_err());
+
+            // update admin
+            let update_admin_msg = CampaignExecuteMsg::UpdateAdmin {
+                admin: USER_2.to_string(),
+            };
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(ADMIN.to_string()),
+                Addr::unchecked("contract3"),
+                &update_admin_msg,
+                &[],
+            );
+
+            assert!(response.is_ok());
+
+            // update admin
+            let update_admin_msg = CampaignExecuteMsg::UpdateAdmin {
+                admin: ADMIN.to_string(),
+            };
+
+            // Execute reset pool
+            let response = app.execute_contract(
+                Addr::unchecked(USER_2.to_string()),
+                Addr::unchecked("contract3"),
+                &update_admin_msg,
+                &[],
+            );
+
+            assert!(response.is_ok());
 
             // reset pool
             let reset_pool_msg = CampaignExecuteMsg::ResetPool {};
@@ -5248,6 +5295,59 @@ mod tests {
 
             // update config
             let create_campaign_msg = crate::msg::ExecuteMsg::UpdateConfig {
+                owner: Some(USER_2.to_string()),
+                campaign_code_id: None,
+                allow_create_for_all: None,
+            };
+
+            // Execute update config
+            let response_update_config = app.execute_contract(
+                Addr::unchecked(USER_1.to_string()),
+                Addr::unchecked(factory_contract.clone()),
+                &create_campaign_msg,
+                &[],
+            );
+
+            // USER_1 is not owner
+            assert!(response_update_config.is_err());
+
+            // update config
+            let create_campaign_msg = crate::msg::ExecuteMsg::UpdateConfig {
+                owner: Some(USER_2.to_string()),
+                campaign_code_id: None,
+                allow_create_for_all: None,
+            };
+
+            // Execute update config
+            let response_update_config = app.execute_contract(
+                Addr::unchecked(ADMIN.to_string()),
+                Addr::unchecked(factory_contract.clone()),
+                &create_campaign_msg,
+                &[],
+            );
+
+            assert!(response_update_config.is_ok());
+
+            // update config
+            let create_campaign_msg = crate::msg::ExecuteMsg::UpdateConfig {
+                owner: Some(ADMIN.to_string()),
+                campaign_code_id: None,
+                allow_create_for_all: None,
+            };
+
+            // Execute update config
+            let response_update_config = app.execute_contract(
+                Addr::unchecked(USER_2.to_string()),
+                Addr::unchecked(factory_contract.clone()),
+                &create_campaign_msg,
+                &[],
+            );
+
+            assert!(response_update_config.is_ok());
+
+            // update config
+            let create_campaign_msg = crate::msg::ExecuteMsg::UpdateConfig {
+                owner: None,
                 campaign_code_id: None,
                 allow_create_for_all: Some(true),
             };
@@ -5261,43 +5361,6 @@ mod tests {
             );
 
             assert!(response_update_config.is_ok());
-
-            // // create campaign contract by factory contract
-            // let create_campaign_msg = crate::msg::ExecuteMsg::CreateCampaign {
-            //     create_campaign: CreateCampaign {
-            //         owner: ADMIN.to_string(),
-            //         campaign_name: "campaign name".to_string(),
-            //         campaign_image: "campaign name".to_string(),
-            //         campaign_description: "campaign name".to_string(),
-            //         start_time: current_block_time + 10,
-            //         end_time: current_block_time + 110,
-            //         limit_per_staker: 2,
-            //         reward_token_info: AssetToken {
-            //             info: token_info.clone(),
-            //             amount: Uint128::zero(),
-            //         },
-            //         allowed_collection: collection_contract.clone(),
-            //         lockup_term: vec![
-            //             LockupTerm {
-            //                 value: 10,
-            //                 percent: Uint128::new(30u128),
-            //             },
-            //             LockupTerm {
-            //                 value: 30,
-            //                 percent: Uint128::new(70u128),
-            //             },
-            //         ],
-            //     },
-            // };
-
-            // // Execute create campaign
-            // let response_create_campaign = app.execute_contract(
-            //     Addr::unchecked(USER_1.to_string()),
-            //     Addr::unchecked(factory_contract.clone()),
-            //     &create_campaign_msg,
-            //     &[],
-            // );
-            // assert!(response_create_campaign.is_ok());
 
             // create campaign contract by factory contract
             let create_campaign_msg = crate::msg::ExecuteMsg::CreateCampaign {

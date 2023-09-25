@@ -84,6 +84,7 @@ pub mod env {
         // factory contract
         // create instantiate message for contract
         let factory_instantiate_msg = FactoryInstantiateMsg {
+            owner: ADMIN.to_string(),
             campaign_code_id: app.store_code(contract_template()),
             allow_create_for_all: false,
         };
