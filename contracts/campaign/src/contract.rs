@@ -437,6 +437,12 @@ pub fn execute_unstake_nft(
     // load nft info
     let nft_info = NFTS.load(deps.storage, (unstake_info.key, unstake_info.lockup_term))?;
 
+    if nft_info.owner != info.sender {
+        return Err(ContractError::NotOwner {
+            token_id: nft_info.token_id,
+        });
+    }
+
     // load TERM_REWARD_RATES
     let term_reward_rates = TERM_REWARD_RATES.load(deps.storage, nft_info.lockup_term.value)?;
     let total_staking = TOTAL_STAKING_BY_TERM.load(deps.storage, nft_info.lockup_term.value)?;
@@ -461,7 +467,7 @@ pub fn execute_unstake_nft(
     let transfer_nft_msg = WasmMsg::Execute {
         contract_addr: campaign_info.allowed_collection.to_string(),
         msg: to_binary(&Cw721ExecuteMsg::TransferNft {
-            recipient: info.sender.to_string(),
+            recipient: nft_info.owner.to_string(),
             token_id: nft_info.token_id.clone(),
         })?,
         funds: vec![],
