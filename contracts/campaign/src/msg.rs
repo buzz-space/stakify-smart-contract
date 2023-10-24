@@ -2,7 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 
 use crate::state::{
-    AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, RewardRate,
+    AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, NftUnStake, RewardRate,
     StakerRewardAssetInfo,
 };
 
@@ -16,6 +16,7 @@ pub struct InstantiateMsg {
     pub campaign_description: String,
 
     pub limit_per_staker: u64,
+    pub total_eligible: u64,           // if = 0 then campaign is unlimited
     pub reward_token_info: AssetToken, // reward token
     pub allowed_collection: String,    // staking collection nft
     pub lockup_term: Vec<LockupTerm>,  // flexible, 15days, 30days, 60days
@@ -26,31 +27,20 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    AddRewardToken {
-        amount: Uint128,
-    },
+    AddRewardToken { amount: Uint128 },
     // user can stake 1 or many nfts to this campaign
-    StakeNfts {
-        stake_info: NftStake,
-    },
+    StakeNfts { stake_info: NftStake },
 
-    UnStakeNft {
-        unstake_info: NftKey,
-        token_id: String,
-    },
+    UnStakeNft { un_stakes: Vec<NftUnStake> },
 
     // user can claim reward
-    ClaimReward {
-        amount: Uint128,
-    },
+    ClaimReward { amount: Uint128 },
 
     WithdrawReward {},
 
     ResetPool {},
 
-    UpdateAdmin {
-        admin: String,
-    },
+    UpdateAdmin { admin: String },
 }
 
 #[cw_serde]
@@ -68,6 +58,9 @@ pub enum QueryMsg {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
+
+    #[returns(u64)]
+    TotalNfts {},
 
     #[returns(StakerRewardAssetInfo)]
     NftStaked { owner: Addr },

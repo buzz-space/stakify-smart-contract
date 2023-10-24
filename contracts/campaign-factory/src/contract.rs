@@ -165,6 +165,10 @@ pub fn execute_create_campaign(
                 create_campaign.limit_per_staker.to_string().as_str(),
             ),
             (
+                "total_eligible",
+                create_campaign.total_eligible.to_string().as_str(),
+            ),
+            (
                 "reward_token_info",
                 &format!("{}", create_campaign.reward_token_info),
             ),
@@ -192,6 +196,7 @@ pub fn execute_create_campaign(
                     campaign_image: create_campaign.campaign_image,
                     campaign_description: create_campaign.campaign_description,
                     limit_per_staker: create_campaign.limit_per_staker,
+                    total_eligible: create_campaign.total_eligible,
                     reward_token_info: create_campaign.reward_token_info,
                     allowed_collection: create_campaign.allowed_collection,
                     lockup_term: create_campaign.lockup_term,

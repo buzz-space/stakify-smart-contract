@@ -57,8 +57,9 @@ pub struct CampaignInfo {
     pub total_reward_claimed: Uint128, // default 0
     pub total_reward: Uint128,         // default 0
     pub limit_per_staker: u64,         // max nft can stake
-    pub reward_token: AssetToken,      // reward token
-    pub allowed_collection: Addr,      // staking collection nft
+    pub total_eligible: u64,
+    pub reward_token: AssetToken, // reward token
+    pub allowed_collection: Addr, // staking collection nft
     pub lockup_term: Vec<LockupTerm>,
     pub reward_per_second: Uint128,
     pub start_time: u64, // start time must be from T + 1
@@ -126,10 +127,19 @@ pub const STAKERS_INFO: Map<Addr, StakerRewardAssetInfo> = Map::new("stakers_inf
 
 // list nft staked
 pub const NFTS: Map<(u64, u64), NftInfo> = Map::new("nfts");
+
+// total nft in pool
+pub const TOTAL_NFTS: Item<u64> = Item::new("total_nfts");
+
+// key of nft in nfts
 pub const NUMBER_OF_NFTS: Map<u64, u64> = Map::new("number_of_nfts");
 
+// arr calc reward for nft
 pub const TERM_REWARD_RATES: Map<u64, Vec<RewardRate>> = Map::new("term_reward_rates");
+// amount nft is staking by term
 pub const TOTAL_STAKING_BY_TERM: Map<u64, u64> = Map::new("total_staking_by_term");
+// arr expiration time
 pub const TERM_EXPIRATION_TIMES: Map<u64, Vec<u64>> = Map::new("expiration_times");
 
+// previous total pending reward in pool
 pub const PREVIOUS_TOTAL_REWARD: Item<Uint128> = Item::new("previous_total_reward");

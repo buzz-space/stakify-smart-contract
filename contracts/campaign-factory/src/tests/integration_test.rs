@@ -19,8 +19,8 @@ mod tests {
             },
         };
         use campaign::state::{
-            AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, RewardRate,
-            StakerRewardAssetInfo, TokenInfo,
+            AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, NftUnStake,
+            RewardRate, StakerRewardAssetInfo, TokenInfo,
         };
         use campaign::{
             msg::{ExecuteMsg as CampaignExecuteMsg, QueryMsg as CampaignQueryMsg},
@@ -264,6 +264,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -343,6 +344,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -384,6 +386,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -1036,11 +1039,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 1,
+                    token_id: "1".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "1".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -1271,6 +1274,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info,
                         amount: Uint128::from(12000u128),
@@ -1530,6 +1534,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -1598,6 +1603,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -2678,6 +2684,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::from(952500u128),
@@ -2846,6 +2853,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::from(952500u128),
@@ -3349,11 +3357,11 @@ mod tests {
 
             // USER_1 un stake nft 1 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 1,
+                    token_id: "1".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "1".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -3401,11 +3409,11 @@ mod tests {
 
             // USER_1 un stake nft 2 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 2,
+                    token_id: "2".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "2".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -3449,11 +3457,11 @@ mod tests {
 
             // USER_1 un stake nft 3 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 2,
+                    token_id: "3".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "3".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -3533,11 +3541,11 @@ mod tests {
 
             // USER_1 un stake nft 4 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 4,
+                    token_id: "4".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "4".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -3552,11 +3560,11 @@ mod tests {
 
             // USER_2 un stake nft 6 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 1,
+                    token_id: "6".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "6".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -3571,11 +3579,11 @@ mod tests {
 
             // USER_2 un stake nft 7 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 3,
+                    token_id: "7".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "7".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -3590,11 +3598,11 @@ mod tests {
 
             // USER_2 un stake nft 8 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 3,
+                    token_id: "8".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "8".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -3724,6 +3732,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info,
                         amount: Uint128::from(397500u128),
@@ -3991,6 +4000,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -4053,6 +4063,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -4850,11 +4861,11 @@ mod tests {
 
             // USER_1 un stake nft 1 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 1,
+                    token_id: "1".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "1".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -4869,11 +4880,11 @@ mod tests {
 
             // USER_1 un stake nft 2 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 2,
+                    token_id: "2".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "2".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -4888,11 +4899,11 @@ mod tests {
 
             // USER_2 un stake nft 6 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 3,
+                    token_id: "6".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "6".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -4907,11 +4918,11 @@ mod tests {
 
             // USER_2 un stake nft 7 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 4,
+                    token_id: "7".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "7".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -4926,11 +4937,11 @@ mod tests {
 
             // USER_3 un stake nft 11 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 5,
+                    token_id: "11".to_string(),
                     lockup_term: 30,
-                },
-                token_id: "11".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -5043,6 +5054,7 @@ mod tests {
                     campaign_image: "campaign name".to_string(),
                     campaign_description: "campaign name".to_string(),
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token: AssetToken {
                         info: token_info,
                         amount: Uint128::from(316668u128),
@@ -5265,6 +5277,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -5372,6 +5385,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 100,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: TokenInfo::NativeToken {
                             denom: "AURA".to_string(),
@@ -5412,6 +5426,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 100,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -5450,6 +5465,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -5488,6 +5504,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -5526,6 +5543,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -5564,6 +5582,7 @@ mod tests {
                     start_time: current_block_time + 100,
                     end_time: current_block_time + 10,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -5602,6 +5621,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 94608020,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info.clone(),
                         amount: Uint128::zero(),
@@ -5640,6 +5660,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 110,
                     limit_per_staker: 4,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info,
                         amount: Uint128::zero(),
@@ -5997,11 +6018,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 3,
+                    token_id: "3".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "3".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -6017,11 +6038,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 1,
+                    token_id: "1".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "1".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -6037,11 +6058,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 1,
+                    token_id: "1".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "1".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -6089,11 +6110,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                unstake_info: NftKey {
+                un_stakes: vec![NftUnStake {
                     key: 1,
+                    token_id: "1".to_string(),
                     lockup_term: 10,
-                },
-                token_id: "1".to_string(),
+                }],
             };
 
             // Execute un stake nft
@@ -6362,6 +6383,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 100,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info,
                         amount: Uint128::zero(),
@@ -6547,6 +6569,7 @@ mod tests {
                     start_time: current_block_time + 10,
                     end_time: current_block_time + 100,
                     limit_per_staker: 2,
+                    total_eligible: 0,
                     reward_token_info: AssetToken {
                         info: token_info,
                         amount: Uint128::zero(),

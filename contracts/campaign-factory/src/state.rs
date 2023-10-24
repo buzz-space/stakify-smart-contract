@@ -69,6 +69,7 @@ pub struct CreateCampaign {
     pub start_time: u64,
     pub end_time: u64,
     pub limit_per_staker: u64,
+    pub total_eligible: u64,
     pub reward_token_info: AssetToken,
     pub allowed_collection: String,
     pub lockup_term: Vec<LockupTerm>,

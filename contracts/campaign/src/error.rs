@@ -15,6 +15,9 @@ pub enum ContractError {
     #[error("## You have reached the maximum staked NFTs ##")]
     LimitPerStake {},
 
+    #[error("## Exceeds the maximum NFTs could be staked in campaign ##")]
+    LimitPerCollection {},
+
     #[error("## Invalid funds ##")]
     InvalidFunds {},
 
