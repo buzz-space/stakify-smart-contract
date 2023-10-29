@@ -670,7 +670,7 @@ pub fn execute_withdraw_reward(
         return Err(ContractError::Unauthorized {});
     }
 
-    // campaing must be ended then withdraw remaining reward
+    // campaign must be ended then withdraw remaining reward
     if campaign_info.end_time > env.block.time.seconds() {
         return Err(ContractError::InvalidTimeToWithdrawReward {});
     }
