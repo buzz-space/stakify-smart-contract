@@ -32,7 +32,7 @@ const auraTestnet = {
     prefix: "aura",
     denom: "ueaura",
     chainId: "euphoria-2",
-    broadcastTimeoutMs: 5000,
+    broadcastTimeoutMs: 10000,
     broadcastPollIntervalMs: 1000,
 };
 
@@ -41,7 +41,7 @@ const euphoria = {
     prefix: "aura",
     denom: "ueaura",
     chainId: "euphoria-1",
-    broadcastTimeoutMs: 5000,
+    broadcastTimeoutMs: 10000,
     broadcastPollIntervalMs: 1000,
 };
 

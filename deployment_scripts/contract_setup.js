@@ -8,6 +8,7 @@ const { calculateFee, GasPrice } = require("@cosmjs/stargate");
 
 // wasm folder
 const wasmFolder = `${__dirname}/../artifacts`;
+console.log(__dirname);
 
 // gas price
 const gasPrice = GasPrice.fromString(`0.025${chainConfig.denom}`);
@@ -23,6 +24,7 @@ async function store_contract(wasm_name) {
     const contractCode = fs.readFileSync(`${wasmFolder}/${wasm_name}.wasm`);
 
     console.log("Uploading contract code...");
+    console.log(deployerAccount.address, contractCode);
     const storeCodeResponse = await deployerClient.upload(
         deployerAccount.address,
         contractCode,
@@ -121,7 +123,6 @@ async function main(contract_name) {
     deployerClient = await SigningCosmWasmClient.connectWithSigner(chainConfig.rpcEndpoint, deployerWallet, {
         gasPrice,
     });
-
     // console.log({ deployerClient });
     deployerAccount = (await deployerWallet.getAccounts())[0];
     // console.log({ deployerAccount });
@@ -133,44 +134,50 @@ async function main(contract_name) {
     testerClient = await SigningCosmWasmClient.connectWithSigner(chainConfig.rpcEndpoint, testerWallet, { gasPrice });
     testerAccount = (await testerWallet.getAccounts())[0];
 
-    // // ****************
-    // // EXECUTE CONTRACT
-    // // ****************
-    // // store contract
-    // console.log("1. Storing source code...");
-    // let storeCodeResponse = await store_contract(contract_name);
-
-    // // prepare instantiate message
-    // const instantiateMsg = {
-    //     owner: "aura1kc2676w9nvhquctkw0ptsy4dzg6znkcyfz8z2p",
-    //     campaign_code_id: 24,
-    //     allow_create_for_all: false,
-    // };
+    // ****************
+    // EXECUTE CONTRACT
+    // ****************
+    // store contract
+    console.log("1. Storing source code...");
+    let storeCodeResponse = await store_contract(contract_name);
 
     // prepare instantiate message
+    // const instantiateMsg = {
+    //     owner: "aura148cy455pkrqx8etf4fr57ejy5r9j9yy8cfxlgt",
+    //     campaign_name: "Campaign test (Owner: Tri)",
+    //     campaign_image:
+    //         "https://aura-explorer-assets.s3.ap-southeast-1.amazonaws.com/euphoria-assets/images/icons/aura.svg",
+    //     campaign_description: "Campaign test description",
+    //     limit_per_staker: 2,
+    //     reward_token_info: {
+    //         info: {
+    //             token: {
+    //                 contract_addr: "aura1jv0j23ml9d0mc2v5x5qk9mzcc3zq9suvehppprs5k6cqc37m6tzq6kv33k",
+    //             },
+    //         },
+    //         amount: "0",
+    //     },
+    //     allowed_collection: "aura163gwaw6gc6xyyrx2p633pykrcs674fy739fjn0gk7h50n5fz8v2qydh65h",
+    //     lockup_term: [
+    //         {
+    //             value: 3600,
+    //             percent: "10",
+    //         },
+    //         {
+    //             value: 86400,
+    //             percent: "90",
+    //         },
+    //     ],
+    //     start_time: 1690360422,
+    //     end_time: 1690615225,
+    // };
     const instantiateMsg = {
-        name: "GolfBall",
-        symbol: "GBALL",
-        decimals: 18,
-        initial_balances: [
-            {
-                amount: "500000000000000000000000",
-                address: "aura19he3exuu8kz5kcshaw74uhn4s9ppx3dykrrwda",
-            },
-        ],
-        mint: {
-            minter: "aura19he3exuu8kz5kcshaw74uhn4s9ppx3dykrrwda",
-        },
-        marketing: {
-            logo: {
-                url: "https://bafybeifkrodjtle4xgh3nk6saigy7cms4rx7e24p3ydswbieavkmx3f5vm.ipfs.nftstorage.link/photo_2023-09-27_19-44-07.jpg",
-            },
-        },
+        campaign_code_id: 1335,
     };
 
-    // instantiate contract
-    console.log("2. Instantiating contract...");
-    let instantiateResponse = await instantiate(17, instantiateMsg);
+    // // instantiate contract
+    // console.log("2. Instantiating contract...");
+    // let instantiateResponse = await instantiate(storeCodeResponse.codeId, instantiateMsg);
 
     console.log("Contract setup completed!");
 }

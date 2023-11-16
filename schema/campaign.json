@@ -17,7 +17,8 @@
       "lockup_term",
       "owner",
       "reward_token_info",
-      "start_time"
+      "start_time",
+      "total_eligible"
     ],
     "properties": {
       "admin": {
@@ -58,6 +59,11 @@
         "$ref": "#/definitions/AssetToken"
       },
       "start_time": {
+        "type": "integer",
+        "format": "uint64",
+        "minimum": 0.0
+      },
+      "total_eligible": {
         "type": "integer",
         "format": "uint64",
         "minimum": 0.0
@@ -206,15 +212,14 @@
           "un_stake_nft": {
             "type": "object",
             "required": [
-              "token_id",
-              "unstake_info"
+              "un_stakes"
             ],
             "properties": {
-              "token_id": {
-                "type": "string"
-              },
-              "unstake_info": {
-                "$ref": "#/definitions/NftKey"
+              "un_stakes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/NftUnStake"
+                }
               }
             },
             "additionalProperties": false
@@ -292,26 +297,6 @@
       }
     ],
     "definitions": {
-      "NftKey": {
-        "type": "object",
-        "required": [
-          "key",
-          "lockup_term"
-        ],
-        "properties": {
-          "key": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "lockup_term": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          }
-        },
-        "additionalProperties": false
-      },
       "NftStake": {
         "type": "object",
         "required": [
@@ -329,6 +314,30 @@
             "items": {
               "type": "string"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "NftUnStake": {
+        "type": "object",
+        "required": [
+          "key",
+          "lockup_term",
+          "token_id"
+        ],
+        "properties": {
+          "key": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "lockup_term": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "token_id": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -411,6 +420,19 @@
                 "minimum": 0.0
               }
             },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "total_nfts"
+        ],
+        "properties": {
+          "total_nfts": {
+            "type": "object",
             "additionalProperties": false
           }
         },
@@ -520,6 +542,7 @@
         "reward_per_second",
         "reward_token",
         "start_time",
+        "total_eligible",
         "total_reward",
         "total_reward_claimed"
       ],
@@ -562,6 +585,11 @@
           "$ref": "#/definitions/AssetToken"
         },
         "start_time": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "total_eligible": {
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
@@ -915,6 +943,13 @@
           "additionalProperties": false
         }
       }
+    },
+    "total_nfts": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     },
     "total_pending_reward": {
       "$schema": "http://json-schema.org/draft-07/schema#",

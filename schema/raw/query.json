@@ -78,6 +78,19 @@
     {
       "type": "object",
       "required": [
+        "total_nfts"
+      ],
+      "properties": {
+        "total_nfts": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "nft_staked"
       ],
       "properties": {

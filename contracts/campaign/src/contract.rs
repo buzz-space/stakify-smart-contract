@@ -54,7 +54,7 @@ pub fn instantiate(
     }
 
     // campaign during max 3 years
-    if (msg.end_time - msg.start_time) > MAX_TIME_VALID {
+    if msg.end_time - msg.start_time > MAX_TIME_VALID {
         return Err(ContractError::LimitStartDate {});
     }
 
@@ -200,11 +200,13 @@ pub fn execute_add_reward_token(
             // execute cw20 transfer msg from info.sender to contract
             res = res.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
-                msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
-                    owner: info.sender.to_string(),
-                    recipient: env.contract.address.to_string(),
-                    amount,
-                })?,
+                msg: to_binary(
+                    &(Cw20ExecuteMsg::TransferFrom {
+                        owner: info.sender.to_string(),
+                        recipient: env.contract.address.to_string(),
+                        amount,
+                    }),
+                )?,
                 funds: vec![],
             }));
 
@@ -256,7 +258,7 @@ pub fn execute_stake_nft(
 
     // if total_eligible != 0 then total nft in pool must < total_eligible
     if campaign_info.total_eligible != 0
-        && (total_nfts + (stake_info.token_ids.len() as u64)) > campaign_info.total_eligible
+        && total_nfts + (stake_info.token_ids.len() as u64) > campaign_info.total_eligible
     {
         return Err(ContractError::LimitPerCollection {});
     }
@@ -311,7 +313,7 @@ pub fn execute_stake_nft(
     if campaign_info.limit_per_staker > 0 {
         // the length of token_ids + length nft staked should be smaller than limit per staker
         if stake_info.token_ids.len() + staker_info.keys.len()
-            > campaign_info.limit_per_staker as usize
+            > (campaign_info.limit_per_staker as usize)
         {
             return Err(ContractError::LimitPerStake {});
         }
@@ -359,10 +361,12 @@ pub fn execute_stake_nft(
         // prepare message to transfer nft to contract
         let transfer_nft_msg = WasmMsg::Execute {
             contract_addr: campaign_info.allowed_collection.clone().to_string(),
-            msg: to_binary(&Cw721ExecuteMsg::TransferNft {
-                recipient: env.contract.address.clone().to_string(),
-                token_id: token_id.clone(),
-            })?,
+            msg: to_binary(
+                &(Cw721ExecuteMsg::TransferNft {
+                    recipient: env.contract.address.clone().to_string(),
+                    token_id: token_id.clone(),
+                }),
+            )?,
             funds: vec![],
         };
 
@@ -375,7 +379,7 @@ pub fn execute_stake_nft(
             is_end_reward: false,
             start_time: current_time,
             time_calc: current_time,
-            end_time: (current_time + lockup_term.value),
+            end_time: current_time + lockup_term.value,
         };
         // save info nft
         NFTS.save(deps.storage, (nft_key, lockup_term.value), &nft_info)?;
@@ -472,46 +476,88 @@ pub fn execute_unstake_nft(
         }
 
         // load TERM_REWARD_RATES
-        let term_reward_rates = TERM_REWARD_RATES.load(deps.storage, nft_info.lockup_term.value)?;
-        let total_staking = TOTAL_STAKING_BY_TERM.load(deps.storage, nft_info.lockup_term.value)?;
-        let expiration_times =
+        let term_reward_rates =
+            TERM_REWARD_RATES.load(deps.storage, nft_info.lockup_term.value)?;
+        let total_staking =
+            TOTAL_STAKING_BY_TERM.load(deps.storage, nft_info.lockup_term.value)?;
+        let mut expiration_times =
             TERM_EXPIRATION_TIMES.load(deps.storage, nft_info.lockup_term.value)?;
 
-        let (new_nft_info, _, _, _) = calculate_reward(
-            nft_info.clone(),
-            term_reward_rates,
-            expiration_times,
-            total_staking,
-            current_time,
-            campaign_info.end_time,
-            campaign_info.reward_per_second,
-        );
+        if campaign_info.start_time < current_time {
+            // campaign active => calc reward, update status
+            // calc reward for nft
+            let (new_nft_info, _, _, _) = calculate_reward(
+                nft_info.clone(),
+                term_reward_rates.clone(),
+                expiration_times.clone(),
+                total_staking,
+                current_time,
+                campaign_info.end_time,
+                campaign_info.reward_per_second,
+            );
 
-        // check time unstake and owner nft
-        if !new_nft_info.is_end_reward {
-            return Err(ContractError::InvalidTimeToUnStake {});
+            // check time unstake and owner nft
+            if !new_nft_info.is_end_reward {
+                return Err(ContractError::InvalidTimeToUnStake {});
+            }
+            // update reward for staker
+            staker.reward_debt =
+                add_reward(staker.reward_debt, new_nft_info.pending_reward).unwrap();
+        } else {
+            // campaign upcoming => update status
+            // update total staking & reward_rates
+            let (updated_reward_rate, t) = update_reward_rate(
+                term_reward_rates,
+                total_staking,
+                campaign_info.start_time,
+                -1,
+            );
+
+            // remove 1 pt in expire_times
+            expiration_times.remove(
+                expiration_times
+                    .iter()
+                    .position(|x| x == &nft_info.end_time)
+                    .unwrap(),
+            );
+
+            TERM_EXPIRATION_TIMES.save(
+                deps.storage,
+                nft_info.lockup_term.value,
+                &expiration_times,
+            )?;
+
+            // update term
+            TERM_REWARD_RATES.save(
+                deps.storage,
+                nft_info.lockup_term.value,
+                &updated_reward_rate,
+            )?;
+            TOTAL_STAKING_BY_TERM.save(deps.storage, nft_info.lockup_term.value, &t)?;
         }
 
-        // prepare message to transfer nft back to the owner
-        let transfer_nft_msg = WasmMsg::Execute {
-            contract_addr: campaign_info.allowed_collection.to_string(),
-            msg: to_binary(&Cw721ExecuteMsg::TransferNft {
-                recipient: nft_info.owner.to_string(),
-                token_id: nft_info.token_id.clone(),
-            })?,
-            funds: vec![],
-        };
-
-        // update reward for staker
-        staker.reward_debt = add_reward(staker.reward_debt, new_nft_info.pending_reward).unwrap();
+        // remove nft for staker
         staker
             .keys
-            .retain(|k| !(k.key == nft.key && k.lockup_term == nft.lockup_term)); // remove nft for staker
+            .retain(|k| !(k.key == nft.key && k.lockup_term == nft.lockup_term));
 
         // remove nft in NFTS
         NFTS.remove(deps.storage, (nft.key, nft.lockup_term));
 
+        // update total nfts in pool
         total_nfts = total_nfts.checked_sub(1u64).unwrap();
+
+        // prepare message to transfer nft back to the owner
+        let transfer_nft_msg = WasmMsg::Execute {
+            contract_addr: campaign_info.allowed_collection.to_string(),
+            msg: to_binary(
+                &(Cw721ExecuteMsg::TransferNft {
+                    recipient: nft_info.owner.to_string(),
+                    token_id: nft_info.token_id.clone(),
+                }),
+            )?,
+            funds: vec![],
+        };
 
         res = res.add_message(transfer_nft_msg);
     }
@@ -619,10 +665,12 @@ pub fn execute_claim_reward(
             // execute cw20 transfer msg from info.sender to contract
             res = res.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
-                msg: to_binary(&Cw20ExecuteMsg::Transfer {
-                    recipient: info.sender.to_string(),
-                    amount,
-                })?,
+                msg: to_binary(
+                    &(Cw20ExecuteMsg::Transfer {
+                        recipient: info.sender.to_string(),
+                        amount,
+                    }),
+                )?,
                 funds: vec![],
             }));
 
@@ -699,7 +747,7 @@ pub fn execute_withdraw_reward(
             update_reward_rate(term_reward_rates, total_staking, current_time, 0);
 
         if final_reward_rate.len() > 1 {
-            for i in 0..(final_reward_rate.len() - 1) {
+            for i in 0..final_reward_rate.len() - 1 {
                 let current = &final_reward_rate[i];
                 let next = &final_reward_rate[i + 1];
 
@@ -736,10 +784,12 @@ pub fn execute_withdraw_reward(
 
             res = res.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
-                msg: to_binary(&Cw20ExecuteMsg::Transfer {
-                    recipient: info.sender.to_string(),
-                    amount: withdraw_reward,
-                })?,
+                msg: to_binary(
+                    &(Cw20ExecuteMsg::Transfer {
+                        recipient: info.sender.to_string(),
+                        amount: withdraw_reward,
+                    }),
+                )?,
                 funds: vec![],
             }));
 
@@ -815,7 +865,7 @@ pub fn execute_reset_pool(
 
         // calculate total pending reward in current reward_rates
         if term_reward_rates.len() > 1 {
-            for i in 0..(term_reward_rates.len() - 1) {
+            for i in 0..term_reward_rates.len() - 1 {
                 let current = &term_reward_rates[i];
                 let next = &term_reward_rates[i + 1];
 
@@ -912,6 +962,7 @@ fn query_total_nfts(deps: Deps) -> Result<u64, ContractError> {
 
     Ok(total_nfts)
 }
+
 
 fn query_nft_info(deps: Deps, env: Env, nft_key: NftKey) -> Result<NftInfo, ContractError> {
     let campaign_info: CampaignInfo = CAMPAIGN_INFO.load(deps.storage)?;
@@ -1034,7 +1085,7 @@ fn query_total_pending_reward(deps: Deps, env: Env) -> Result<Uint128, ContractE
             update_reward_rate(term_reward_rates, total_staking, current_time, 0);
 
         if final_reward_rate.len() > 1 {
-            for i in 0..(final_reward_rate.len() - 1) {
+            for i in 0..final_reward_rate.len() - 1 {
                 let current = &final_reward_rate[i];
                 let next = &final_reward_rate[i + 1];
 
