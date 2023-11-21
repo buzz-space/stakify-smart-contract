@@ -14,6 +14,7 @@
     "reward_per_second",
     "reward_token",
     "start_time",
+    "total_eligible",
     "total_reward",
     "total_reward_claimed"
   ],
@@ -56,6 +57,11 @@
       "$ref": "#/definitions/AssetToken"
     },
     "start_time": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "total_eligible": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0

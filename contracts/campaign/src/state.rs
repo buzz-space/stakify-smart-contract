@@ -88,12 +88,6 @@ pub struct NftStake {
 #[cw_serde]
 pub struct NftKey {
     pub key: u64,
-    pub lockup_term: u64,
-}
-
-#[cw_serde]
-pub struct NftUnStake {
-    pub key: u64,
     pub token_id: String,
     pub lockup_term: u64,
 }

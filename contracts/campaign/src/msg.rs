@@ -2,7 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 
 use crate::state::{
-    AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, NftUnStake, RewardRate,
+    AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, RewardRate,
     StakerRewardAssetInfo,
 };
 
@@ -31,10 +31,12 @@ pub enum ExecuteMsg {
     // user can stake 1 or many nfts to this campaign
     StakeNfts { stake_info: NftStake },
 
-    UnStakeNft { un_stakes: Vec<NftUnStake> },
-
     // user can claim reward
     ClaimReward { amount: Uint128 },
+
+    UnStakeNft { unstake_info: NftKey },
+
+    UnStakeAndClaimNft { un_stakes: Vec<NftKey> },
 
     WithdrawReward {},
 
@@ -70,4 +72,13 @@ pub enum QueryMsg {
 
     #[returns(Vec<RewardRate>)]
     TermRewardRates { term_value: u64 },
+
+    #[returns(Vec<u64>)]
+    ExpirationTimes { term_value: u64 },
+
+    #[returns(u64)]
+    TotalStaking { term_value: u64 },
+
+    #[returns(String)]
+    VersionContract {},
 }

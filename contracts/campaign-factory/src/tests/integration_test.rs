@@ -19,12 +19,12 @@ mod tests {
             },
         };
         use campaign::state::{
-            AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, NftUnStake,
-            RewardRate, StakerRewardAssetInfo, TokenInfo,
+            AssetToken, CampaignInfo, LockupTerm, NftInfo, NftKey, NftStake, RewardRate,
+            StakerRewardAssetInfo, TokenInfo,
         };
         use campaign::{
             msg::{ExecuteMsg as CampaignExecuteMsg, QueryMsg as CampaignQueryMsg},
-            utils::{add_reward, calc_reward_in_time, sub_reward},
+            utils::calc_reward_in_time,
         };
         use cosmwasm_std::{Addr, BlockInfo, Empty, Uint128};
         use cw20::{BalanceResponse, Cw20ExecuteMsg};
@@ -540,6 +540,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -580,6 +581,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 1,
+                        token_id: "1".to_string(),
                         lockup_term: 10
                     }],
                     reward_debt: Uint128::zero(),
@@ -602,6 +604,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -653,6 +656,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -685,6 +689,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -724,6 +729,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -756,6 +762,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -797,10 +804,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -890,10 +899,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -910,6 +921,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -942,6 +954,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -981,6 +994,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -1013,6 +1027,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -1039,11 +1054,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "1".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -1072,6 +1087,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 2,
+                        token_id: "2".to_string(),
                         lockup_term: 10
                     }],
                     reward_debt: Uint128::from(4500u128),
@@ -1087,6 +1103,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -1187,6 +1204,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -1227,6 +1245,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 2,
+                        token_id: "2".to_string(),
                         lockup_term: 10
                     }],
                     reward_debt: Uint128::from(4500u128),
@@ -1314,6 +1333,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 2,
+                        token_id: "2".to_string(),
                         lockup_term: 10
                     }],
                     reward_debt: Uint128::from(4500u128),
@@ -1777,6 +1797,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -1809,6 +1830,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -1850,10 +1872,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -1905,10 +1929,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -1933,6 +1959,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 1,
+                        token_id: "1".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::zero(),
@@ -1983,14 +2010,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -2015,6 +2045,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 1,
+                        token_id: "1".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::zero(),
@@ -2036,6 +2067,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -2068,6 +2100,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -2100,6 +2133,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2132,6 +2166,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2173,14 +2208,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -2212,6 +2250,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -2244,6 +2283,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -2276,6 +2316,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2317,14 +2358,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -2348,6 +2392,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2380,6 +2425,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "6".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2403,17 +2449,6 @@ mod tests {
                     end_time: start_time_6 + 30
                 }
             );
-
-            // // term_reward_rates
-            // let term_reward_rates: Vec<RewardRate> = app
-            //     .wrap()
-            //     .query_wasm_smart(
-            //         Addr::unchecked("contract3"),
-            //         &CampaignQueryMsg::TermRewardRates { term_value: 30 },
-            //     )
-            //     .unwrap();
-
-            // assert_eq!(term_reward_rates, vec![]);
 
             // update admin
             let update_admin_msg = CampaignExecuteMsg::UpdateAdmin {
@@ -2493,6 +2528,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -2525,6 +2561,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -2557,6 +2594,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2589,6 +2627,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "6".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2640,6 +2679,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "7".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2894,14 +2934,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "6".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 3,
+                            token_id: "7".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 3,
+                            token_id: "8".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -2918,6 +2961,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "7".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -2950,6 +2994,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "8".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -2991,14 +3036,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "6".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 3,
+                            token_id: "7".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 3,
+                            token_id: "8".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -3060,6 +3108,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -3091,6 +3140,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -3123,6 +3173,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -3155,6 +3206,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -3187,6 +3239,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "6".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -3219,6 +3272,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "7".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -3251,6 +3305,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "8".to_string(),
                             lockup_term: 10,
                         },
                     },
@@ -3302,18 +3357,22 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -3339,14 +3398,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "6".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 3,
+                            token_id: "7".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 3,
+                            token_id: "8".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -3357,11 +3419,11 @@ mod tests {
 
             // USER_1 un stake nft 1 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "1".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -3391,14 +3453,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -3409,11 +3474,11 @@ mod tests {
 
             // USER_1 un stake nft 2 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 2,
                     token_id: "2".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -3443,10 +3508,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 2,
+                            token_id: "3".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -3457,11 +3524,11 @@ mod tests {
 
             // USER_1 un stake nft 3 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 2,
                     token_id: "3".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -3490,6 +3557,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 4,
+                        token_id: "4".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(105000u128),
@@ -3515,6 +3583,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -3541,11 +3610,11 @@ mod tests {
 
             // USER_1 un stake nft 4 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 4,
                     token_id: "4".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -3560,11 +3629,11 @@ mod tests {
 
             // USER_2 un stake nft 6 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "6".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -3579,11 +3648,11 @@ mod tests {
 
             // USER_2 un stake nft 7 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 3,
                     token_id: "7".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -3598,11 +3667,11 @@ mod tests {
 
             // USER_2 un stake nft 8 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 3,
                     token_id: "8".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -4238,6 +4307,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4270,6 +4340,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4311,10 +4382,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -4358,6 +4431,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 3,
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -4380,6 +4454,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4412,6 +4487,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4444,6 +4520,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4485,10 +4562,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -4513,6 +4592,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 3,
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -4544,10 +4624,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -4572,6 +4654,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 3,
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -4587,6 +4670,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4619,6 +4703,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4651,6 +4736,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -4707,10 +4793,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -4788,10 +4876,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 4,
+                            token_id: "7".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -4824,10 +4914,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 4,
+                            token_id: "7".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -4852,6 +4944,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 5,
+                        token_id: "11".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -4861,11 +4954,11 @@ mod tests {
 
             // USER_1 un stake nft 1 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "1".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -4880,11 +4973,11 @@ mod tests {
 
             // USER_1 un stake nft 2 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 2,
                     token_id: "2".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -4899,11 +4992,11 @@ mod tests {
 
             // USER_2 un stake nft 6 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 3,
                     token_id: "6".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -4918,11 +5011,11 @@ mod tests {
 
             // USER_2 un stake nft 7 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 4,
                     token_id: "7".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -4937,11 +5030,11 @@ mod tests {
 
             // USER_3 un stake nft 11 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 5,
                     token_id: "11".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -5936,18 +6029,22 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 3,
+                            token_id: "3".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -5996,18 +6093,22 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 3,
+                            token_id: "3".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -6018,11 +6119,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 3,
                     token_id: "3".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -6038,11 +6139,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "1".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -6058,11 +6159,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "1".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -6092,14 +6193,17 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 3,
+                            token_id: "3".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 4,
+                            token_id: "4".to_string(),
                             lockup_term: 10
                         }
                     ],
@@ -6110,11 +6214,11 @@ mod tests {
 
             // USER_1 un stake nft msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "1".to_string(),
                     lockup_term: 10,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -6199,26 +6303,6 @@ mod tests {
 
             // check response calc_reward_in_time error
             let response = calc_reward_in_time(start_time, end_time, reward_per_second, percent, 0);
-            assert!(response.is_err());
-
-            // add_reward
-            let response = add_reward(Uint128::zero(), calc_reward);
-            assert!(response.is_ok());
-
-            let add = response.unwrap();
-            assert_eq!(add, Uint128::from(70u128));
-
-            let response = add_reward(Uint128::from(u128::MAX), Uint128::from(10u128));
-            assert!(response.is_err());
-            // sub_reward
-            let response = sub_reward(Uint128::from(20u128), Uint128::from(10u128));
-            assert!(response.is_ok());
-
-            let sub = response.unwrap();
-            assert_eq!(sub, Uint128::from(10u128));
-
-            let response = sub_reward(Uint128::zero(), calc_reward);
-
             assert!(response.is_err());
         }
 
@@ -7137,6 +7221,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7169,6 +7254,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7210,10 +7296,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -7257,6 +7345,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 3,
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -7279,6 +7368,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7311,6 +7401,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7343,6 +7434,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7384,10 +7476,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -7412,6 +7506,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 3,
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -7443,10 +7538,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -7471,6 +7568,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 3,
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -7486,6 +7584,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7518,6 +7617,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7550,6 +7650,7 @@ mod tests {
                     &CampaignQueryMsg::NftInfo {
                         nft_key: NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30,
                         },
                     },
@@ -7606,10 +7707,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 1,
+                            token_id: "1".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 2,
+                            token_id: "2".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -7687,10 +7790,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 4,
+                            token_id: "7".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -7723,10 +7828,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 3,
+                            token_id: "6".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
                             key: 4,
+                            token_id: "7".to_string(),
                             lockup_term: 30
                         }
                     ],
@@ -7751,6 +7858,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 5,
+                        token_id: "11".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::from(0u128),
@@ -7760,11 +7868,11 @@ mod tests {
 
             // USER_1 un stake nft 1 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 1,
                     token_id: "1".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -7779,11 +7887,11 @@ mod tests {
 
             // USER_1 un stake nft 2 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 2,
                     token_id: "2".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -7798,11 +7906,11 @@ mod tests {
 
             // USER_2 un stake nft 6 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 3,
                     token_id: "6".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -7817,11 +7925,11 @@ mod tests {
 
             // USER_2 un stake nft 7 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 4,
                     token_id: "7".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft
@@ -7836,11 +7944,11 @@ mod tests {
 
             // USER_3 un stake nft 11 msg
             let un_stake_nft_msg = CampaignExecuteMsg::UnStakeNft {
-                un_stakes: vec![NftUnStake {
+                unstake_info: NftKey {
                     key: 5,
                     token_id: "11".to_string(),
                     lockup_term: 30,
-                }],
+                },
             };
 
             // Execute un stake nft

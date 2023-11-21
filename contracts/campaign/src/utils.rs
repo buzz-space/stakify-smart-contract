@@ -1,15 +1,6 @@
-use cosmwasm_std::{DivideByZeroError, OverflowError, Uint128};
+use cosmwasm_std::{DivideByZeroError, Uint128};
 
 use crate::state::{NftInfo, RewardRate};
-
-/// Calculates the reward amount
-pub fn add_reward(current_reward: Uint128, calc_reward: Uint128) -> Result<Uint128, OverflowError> {
-    current_reward.checked_add(calc_reward)
-}
-
-pub fn sub_reward(current_reward: Uint128, calc_reward: Uint128) -> Result<Uint128, OverflowError> {
-    current_reward.checked_sub(calc_reward)
-}
 
 pub fn calc_reward_in_time(
     start_time: u64,
@@ -154,7 +145,7 @@ pub fn calculate_reward(
     }
 
     // update pending reward
-    nft.pending_reward = add_reward(nft.pending_reward, Uint128::from(reward)).unwrap();
+    nft.pending_reward = nft.pending_reward.saturating_add(Uint128::from(reward));
 
     // update time calc
     nft.time_calc = nft_end;

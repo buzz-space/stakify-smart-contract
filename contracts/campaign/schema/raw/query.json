@@ -78,6 +78,19 @@
     {
       "type": "object",
       "required": [
+        "total_nfts"
+      ],
+      "properties": {
+        "total_nfts": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "nft_staked"
       ],
       "properties": {
@@ -131,6 +144,65 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "expiration_times"
+      ],
+      "properties": {
+        "expiration_times": {
+          "type": "object",
+          "required": [
+            "term_value"
+          ],
+          "properties": {
+            "term_value": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "total_staking"
+      ],
+      "properties": {
+        "total_staking": {
+          "type": "object",
+          "required": [
+            "term_value"
+          ],
+          "properties": {
+            "term_value": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "version_contract"
+      ],
+      "properties": {
+        "version_contract": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
@@ -142,7 +214,8 @@
       "type": "object",
       "required": [
         "key",
-        "lockup_term"
+        "lockup_term",
+        "token_id"
       ],
       "properties": {
         "key": {
@@ -154,6 +227,9 @@
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
+        },
+        "token_id": {
+          "type": "string"
         }
       },
       "additionalProperties": false

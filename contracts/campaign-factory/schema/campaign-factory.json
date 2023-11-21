@@ -119,7 +119,8 @@
           "lockup_term",
           "owner",
           "reward_token_info",
-          "start_time"
+          "start_time",
+          "total_eligible"
         ],
         "properties": {
           "allowed_collection": {
@@ -157,6 +158,11 @@
             "$ref": "#/definitions/AssetToken"
           },
           "start_time": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "total_eligible": {
             "type": "integer",
             "format": "uint64",
             "minimum": 0.0
