@@ -47,19 +47,36 @@
     {
       "type": "object",
       "required": [
+        "claim_reward"
+      ],
+      "properties": {
+        "claim_reward": {
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "un_stake_nft"
       ],
       "properties": {
         "un_stake_nft": {
           "type": "object",
           "required": [
-            "token_id",
             "unstake_info"
           ],
           "properties": {
-            "token_id": {
-              "type": "string"
-            },
             "unstake_info": {
               "$ref": "#/definitions/NftKey"
             }
@@ -72,17 +89,20 @@
     {
       "type": "object",
       "required": [
-        "claim_reward"
+        "un_stake_and_claim_nft"
       ],
       "properties": {
-        "claim_reward": {
+        "un_stake_and_claim_nft": {
           "type": "object",
           "required": [
-            "amount"
+            "un_stakes"
           ],
           "properties": {
-            "amount": {
-              "$ref": "#/definitions/Uint128"
+            "un_stakes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NftKey"
+              }
             }
           },
           "additionalProperties": false
@@ -143,7 +163,8 @@
       "type": "object",
       "required": [
         "key",
-        "lockup_term"
+        "lockup_term",
+        "token_id"
       ],
       "properties": {
         "key": {
@@ -155,6 +176,9 @@
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
+        },
+        "token_id": {
+          "type": "string"
         }
       },
       "additionalProperties": false

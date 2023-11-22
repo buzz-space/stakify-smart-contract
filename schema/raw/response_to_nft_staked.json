@@ -27,7 +27,8 @@
       "type": "object",
       "required": [
         "key",
-        "lockup_term"
+        "lockup_term",
+        "token_id"
       ],
       "properties": {
         "key": {
@@ -39,6 +40,9 @@
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
+        },
+        "token_id": {
+          "type": "string"
         }
       },
       "additionalProperties": false

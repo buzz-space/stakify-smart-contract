@@ -133,44 +133,44 @@ async function main(contract_name) {
     testerClient = await SigningCosmWasmClient.connectWithSigner(chainConfig.rpcEndpoint, testerWallet, { gasPrice });
     testerAccount = (await testerWallet.getAccounts())[0];
 
-    // // ****************
-    // // EXECUTE CONTRACT
-    // // ****************
-    // // store contract
-    // console.log("1. Storing source code...");
-    // let storeCodeResponse = await store_contract(contract_name);
-
-    // // prepare instantiate message
-    // const instantiateMsg = {
-    //     owner: "aura1kc2676w9nvhquctkw0ptsy4dzg6znkcyfz8z2p",
-    //     campaign_code_id: 24,
-    //     allow_create_for_all: false,
-    // };
+    // ****************
+    // EXECUTE CONTRACT
+    // ****************
+    // store contract
+    console.log("1. Storing source code...");
+    let storeCodeResponse = await store_contract(contract_name);
 
     // prepare instantiate message
     const instantiateMsg = {
-        name: "GolfBall",
-        symbol: "GBALL",
-        decimals: 18,
-        initial_balances: [
-            {
-                amount: "500000000000000000000000",
-                address: "aura19he3exuu8kz5kcshaw74uhn4s9ppx3dykrrwda",
-            },
-        ],
-        mint: {
-            minter: "aura19he3exuu8kz5kcshaw74uhn4s9ppx3dykrrwda",
-        },
-        marketing: {
-            logo: {
-                url: "https://bafybeifkrodjtle4xgh3nk6saigy7cms4rx7e24p3ydswbieavkmx3f5vm.ipfs.nftstorage.link/photo_2023-09-27_19-44-07.jpg",
-            },
-        },
+        owner: "aura1y9ts00xzxywqx3dxcyyg2xsqd8edackqcr9glm",
+        campaign_code_id: 1555,
+        allow_create_for_all: false,
     };
 
-    // instantiate contract
-    console.log("2. Instantiating contract...");
-    let instantiateResponse = await instantiate(17, instantiateMsg);
+    // prepare instantiate message
+    // const instantiateMsg = {
+    //     name: "GolfBall",
+    //     symbol: "GBALL",
+    //     decimals: 18,
+    //     initial_balances: [
+    //         {
+    //             amount: "500000000000000000000000",
+    //             address: "aura19he3exuu8kz5kcshaw74uhn4s9ppx3dykrrwda",
+    //         },
+    //     ],
+    //     mint: {
+    //         minter: "aura19he3exuu8kz5kcshaw74uhn4s9ppx3dykrrwda",
+    //     },
+    //     marketing: {
+    //         logo: {
+    //             url: "https://bafybeifkrodjtle4xgh3nk6saigy7cms4rx7e24p3ydswbieavkmx3f5vm.ipfs.nftstorage.link/photo_2023-09-27_19-44-07.jpg",
+    //         },
+    //     },
+    // };
+
+    // // instantiate contract
+    // console.log("2. Instantiating contract...");
+    // let instantiateResponse = await instantiate(17, instantiateMsg);
 
     console.log("Contract setup completed!");
 }

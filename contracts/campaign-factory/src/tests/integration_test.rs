@@ -1959,7 +1959,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 1,
-                        token_id: "1".to_string(),
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::zero(),
@@ -2045,7 +2045,7 @@ mod tests {
                 StakerRewardAssetInfo {
                     keys: vec![NftKey {
                         key: 1,
-                        token_id: "1".to_string(),
+                        token_id: "6".to_string(),
                         lockup_term: 30
                     }],
                     reward_debt: Uint128::zero(),
@@ -3362,12 +3362,12 @@ mod tests {
                         },
                         NftKey {
                             key: 2,
-                            token_id: "3".to_string(),
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
-                            token_id: "2".to_string(),
+                            token_id: "3".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
@@ -3453,12 +3453,12 @@ mod tests {
                     keys: vec![
                         NftKey {
                             key: 2,
-                            token_id: "3".to_string(),
+                            token_id: "2".to_string(),
                             lockup_term: 10
                         },
                         NftKey {
                             key: 2,
-                            token_id: "2".to_string(),
+                            token_id: "3".to_string(),
                             lockup_term: 30
                         },
                         NftKey {
@@ -6207,7 +6207,7 @@ mod tests {
                             lockup_term: 10
                         }
                     ],
-                    reward_debt: Uint128::from(22500u128), // reward in nft 1 transferred
+                    reward_debt: Uint128::from(11250u128), // reward in nft 1 transferred
                     reward_claimed: Uint128::zero()
                 },
             );

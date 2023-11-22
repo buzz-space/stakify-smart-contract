@@ -39,9 +39,9 @@
             }
         },
         "campaign_factory": {
-            "code_id": 1366,
+            "code_id": 1556,
             "addresses": {
-                "default": "aura12zmnpyl7zpdeq79qyasvx98jxhtzvluhc0lqqfetkqrgnmkdvvnqmxuf0d"
+                "default": "aura18u80d64djc7htr4tzqzs3gm9y2h9098c7z6gmljh6ljlrlxqxkxslk8c6z"
             },
             "proposal": {
                 "store_code": null
