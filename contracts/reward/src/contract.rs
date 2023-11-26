@@ -172,7 +172,7 @@ pub fn execute_set_watch_list(
 
     Ok(Response::new().add_attributes([
         ("action", "set_watch_list"),
-        ("owner", &reward_info.owner.to_string()),
+        ("owner", &reward_info.owner.as_ref()),
         ("watch_list", &format!("{:?}", &watch_list)),
     ]))
 }
@@ -209,7 +209,7 @@ pub fn execute_transfer_reward(
                     contract_addr: contract_addr.to_string(),
                     msg: to_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: addr.clone().to_string(),
-                        amount: staker_info.reward_debt.clone(),
+                        amount: staker_info.reward_debt,
                     })?,
                     funds: vec![],
                 }));
@@ -238,7 +238,7 @@ pub fn execute_transfer_reward(
 
     Ok(res.add_attributes([
         ("action", "transfer_reward"),
-        ("owner", &reward_info.owner.to_string()),
+        ("owner", &reward_info.owner.as_ref()),
     ]))
 }
 

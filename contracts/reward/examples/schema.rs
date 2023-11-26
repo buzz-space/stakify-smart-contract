@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 
-use campaign::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use reward::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

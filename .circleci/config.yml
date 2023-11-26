@@ -3,17 +3,16 @@ workflows:
     version: 2
     test:
         jobs:
-            - campaign
-            - campaign-factory
+            - reward
             - lint
             - coverage
             - wasm-build
 
 jobs:
-    campaign:
+    reward:
         docker:
             - image: rust:1.65.0
-        working_directory: ~/project/contracts/campaign
+        working_directory: ~/project/contracts/reward
         steps:
             - checkout:
                   path: ~/project
@@ -22,7 +21,7 @@ jobs:
                   command: rustc --version; cargo --version; rustup --version
             - restore_cache:
                   keys:
-                      - cargocache-campaign-rust:1.65.0-{{ checksum "~/project/Cargo.lock" }}
+                      - cargocache-reward-rust:1.65.0-{{ checksum "~/project/Cargo.lock" }}
             - run:
                   name: Unit Tests
                   environment:
@@ -44,43 +43,7 @@ jobs:
                   paths:
                       - /usr/local/cargo/registry
                       - target
-                  key: cargocache-campaign-rust:1.65.0-{{ checksum "~/project/Cargo.lock" }}
-
-    campaign-factory:
-        docker:
-            - image: rust:1.65.0
-        working_directory: ~/project/contracts/campaign-factory
-        steps:
-            - checkout:
-                  path: ~/project
-            - run:
-                  name: Version information
-                  command: rustc --version; cargo --version; rustup --version
-            - restore_cache:
-                  keys:
-                      - cargocache-campaign-factory-rust:1.65.0-{{ checksum "~/project/Cargo.lock" }}
-            - run:
-                  name: Unit Tests
-                  environment:
-                      RUST_BACKTRACE: 1
-                  command: cargo unit-test --locked
-            - run:
-                  name: Build and run schema generator
-                  command: cargo schema --locked
-            - run:
-                  name: Ensure checked-in schemas are up-to-date
-                  command: |
-                      CHANGES_IN_REPO=$(git status --porcelain)
-                      if [[ -n "$CHANGES_IN_REPO" ]]; then
-                        echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-                        git status && git --no-pager diff
-                        exit 1
-                      fi
-            - save_cache:
-                  paths:
-                      - /usr/local/cargo/registry
-                      - target
-                  key: cargocache-campaign-factory-rust:1.65.0-{{ checksum "~/project/Cargo.lock" }}
+                  key: cargocache-reward-rust:1.65.0-{{ checksum "~/project/Cargo.lock" }}
 
     lint:
         docker:

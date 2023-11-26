@@ -18,7 +18,6 @@ pub mod env {
     pub const ADMIN: &str = "aura1000000000000000000000000000000000admin";
     pub const USER_1: &str = "aura1000000000000000000000000000000000user1";
     pub const USER_2: &str = "aura1000000000000000000000000000000000user2";
-    pub const USER_3: &str = "aura1000000000000000000000000000000000user3";
 
     pub struct ContractInfo {
         pub contract_addr: String,
@@ -34,7 +33,7 @@ pub mod env {
         })
     }
 
-    // campaign contract
+    // reward contract
     fn contract_template() -> Box<dyn Contract<Empty>> {
         let contract = ContractWrapper::new(Execute, Instantiate, Query);
         Box::new(contract)
@@ -117,7 +116,7 @@ pub mod env {
         // add contract info to the vector
         contracts.push(ContractInfo {
             contract_addr: contract_addr.to_string(),
-            contract_code_id: contract_code_id.clone(),
+            contract_code_id,
         });
 
         (app, contracts)
