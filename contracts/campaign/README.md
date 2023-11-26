@@ -1,3 +1,0 @@
-# Campaign
-
-Campaign smart contract

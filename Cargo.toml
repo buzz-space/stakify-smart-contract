@@ -22,7 +22,6 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
-campaign         = { path = "./contracts/campaign", features = ["library"]}
 bigint            = "4.4.3"
 cosmwasm-schema   = "1.1.8"
 cosmwasm-std      = "1.1.8"
@@ -48,7 +47,7 @@ cosmwasm-storage  = { version = "1.1.8" }
 
 
 
-[profile.release.package.campaign]
+[profile.release.package.reward]
 codegen-units = 1
 incremental = false
 

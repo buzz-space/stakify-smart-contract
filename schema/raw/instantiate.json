@@ -3,66 +3,15 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
-    "admin",
-    "allowed_collection",
-    "campaign_description",
-    "campaign_image",
-    "campaign_name",
-    "end_time",
-    "limit_per_staker",
-    "lockup_term",
     "owner",
-    "reward_token_info",
-    "start_time",
-    "total_eligible"
+    "reward_token_info"
   ],
   "properties": {
-    "admin": {
-      "type": "string"
-    },
-    "allowed_collection": {
-      "type": "string"
-    },
-    "campaign_description": {
-      "type": "string"
-    },
-    "campaign_image": {
-      "type": "string"
-    },
-    "campaign_name": {
-      "type": "string"
-    },
-    "end_time": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "limit_per_staker": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "lockup_term": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/LockupTerm"
-      }
-    },
     "owner": {
       "type": "string"
     },
     "reward_token_info": {
       "$ref": "#/definitions/AssetToken"
-    },
-    "start_time": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "total_eligible": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
     }
   },
   "additionalProperties": false,
@@ -79,24 +28,6 @@
         },
         "info": {
           "$ref": "#/definitions/TokenInfo"
-        }
-      },
-      "additionalProperties": false
-    },
-    "LockupTerm": {
-      "type": "object",
-      "required": [
-        "percent",
-        "value"
-      ],
-      "properties": {
-        "percent": {
-          "$ref": "#/definitions/Uint128"
-        },
-        "value": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
         }
       },
       "additionalProperties": false
