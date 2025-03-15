@@ -1,0 +1,31 @@
+create_campaign = {
+    "owner": "aura1y9ts00xzxywqx3dxcyyg2xsqd8edackqcr9glm",
+    "campaign_name": "New Campaign test",
+    "campaign_image": "/campaign-demo.png",
+    "campaign_description": "This is a campaign test",
+    "limit_per_staker": 0,
+    "total_eligible": 0,
+    "reward_token_info": {
+        "info": {
+            "token": { "contract_addr": "aura1tra9s5kk3df05mazgcz2s2gzkf6f76d68pqlvmtyhqyqyfuhfjmse9xyd2" }
+        },
+        "amount": "0"
+    },
+    "allowed_collection": "aura163gwaw6gc6xyyrx2p633pykrcs674fy739fjn0gk7h50n5fz8v2qydh65h",
+    "lockup_term": [{ "value": 600, "percent": "100" }],
+    "start_time": 1700718000,
+    "end_time": 1700754000
+}
+
+
+stake_nft = {
+    "token_ids": ["Buzz60008z"],
+    "lockup_term": 600
+}
+
+
+nft_key = {
+    "key": 1,
+    "token_id": "Buzz51518z",
+    "lockup_term": 600
+}
